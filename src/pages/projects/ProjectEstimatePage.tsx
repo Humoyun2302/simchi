@@ -5,7 +5,7 @@ import { ArrowLeft, FileDown } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAppDataStore } from '@/stores/app-data-store'
-import { formatDate, formatMoney } from '@/lib/utils'
+import { copyToClipboard, formatDate, formatMoney } from '@/lib/utils'
 import { exportEstimateCsv, exportEstimatePdf, exportEstimateXlsx } from '@/features/estimates/export'
 import { useToastStore } from '@/stores/toast-store'
 
@@ -19,6 +19,7 @@ export function ProjectEstimatePage() {
   const rooms = useAppDataStore((s) => s.rooms[id] ?? [])
   const createPublicLink = useAppDataStore((s) => s.createPublicLink)
   const updateProject = useAppDataStore((s) => s.updateProject)
+  const recalculateProject = useAppDataStore((s) => s.recalculateProject)
   const push = useToastStore((s) => s.push)
 
   const payload = useMemo(() => {
@@ -71,6 +72,31 @@ export function ProjectEstimatePage() {
         <p className="text-sm">{t('estimate.validUntil')}: {formatDate(payload.validUntil)}</p>
         <p className="text-2xl font-extrabold text-primary">{formatMoney(project.grand_total)}</p>
       </Card>
+      <Card className="space-y-2">
+        <h3 className="font-bold">{t('project.materials')}</h3>
+        {materials.length === 0 ? (
+          <div className="space-y-2">
+            <p className="text-sm text-muted">Нет позиций — пересчитайте проект</p>
+            <Button variant="secondary" onClick={() => recalculateProject(id)}>Пересчитать</Button>
+          </div>
+        ) : null}
+        {materials.map((m) => (
+          <div key={m.id} className="flex justify-between gap-3 text-sm">
+            <span>{m.name}</span>
+            <span className="font-semibold">{formatMoney(m.total_price)}</span>
+          </div>
+        ))}
+      </Card>
+      <Card className="space-y-2">
+        <h3 className="font-bold">{t('project.works')}</h3>
+        {works.length === 0 ? <p className="text-sm text-muted">—</p> : null}
+        {works.map((w) => (
+          <div key={w.id} className="flex justify-between gap-3 text-sm">
+            <span>{w.name}</span>
+            <span className="font-semibold">{formatMoney(w.total_price)}</span>
+          </div>
+        ))}
+      </Card>
       <Card className="bg-warning/40">
         <p className="text-sm text-warning-text">{t('calc.disclaimer')}</p>
       </Card>
@@ -88,12 +114,12 @@ export function ProjectEstimatePage() {
       </div>
       <Button
         className="w-full"
-        onClick={() => {
+        onClick={async () => {
           const token = createPublicLink(project.id)
           const url = `${window.location.origin}/estimate/public/${token}`
-          void navigator.clipboard.writeText(url)
+          const ok = await copyToClipboard(url)
           updateProject(project.id, { status: 'sent' })
-          push('Ссылка скопирована', 'success')
+          push(ok ? 'Ссылка скопирована' : `Ссылка: ${url}`, ok ? 'success' : 'info')
         }}
       >
         Отправить клиенту

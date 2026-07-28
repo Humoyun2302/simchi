@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from 'lucide-react'
@@ -25,11 +25,16 @@ export function ProjectWizardPage() {
   const setWizard = useAppDataStore((s) => s.setWizard)
   const clients = useAppDataStore((s) => s.clients)
   const saveWizardProject = useAppDataStore((s) => s.saveWizardProject)
+  const restoreWizardDraft = useAppDataStore((s) => s.restoreWizardDraft)
   const profile = useAuthStore((s) => s.profile)
   const push = useToastStore((s) => s.push)
   const [traceId, setTraceId] = useState<string | null>(null)
   const [leaveOpen, setLeaveOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    void restoreWizardDraft()
+  }, [restoreWizardDraft])
 
   const step = wizard.step
   const titles = [
@@ -43,7 +48,24 @@ export function ProjectWizardPage() {
 
   const calc = useMemoCalc(wizard)
 
-  const next = () => setWizard({ step: Math.min(STEPS - 1, step + 1) })
+  const canProceed = (): boolean => {
+    if (step === 0) {
+      if (wizard.clientMode === 'existing') return Boolean(wizard.clientId)
+      return Boolean(wizard.client.full_name.trim() && wizard.client.phone.trim())
+    }
+    if (step === 1) return Boolean(wizard.project.title.trim() || wizard.project.address.trim())
+    if (step === 2) return wizard.rooms.length > 0
+    if (step === 3) return wizard.points.length > 0
+    return true
+  }
+
+  const next = () => {
+    if (!canProceed()) {
+      push('Заполните обязательные поля шага', 'error')
+      return
+    }
+    setWizard({ step: Math.min(STEPS - 1, step + 1) })
+  }
   const back = () => {
     if (step === 0) {
       setLeaveOpen(true)
@@ -54,6 +76,20 @@ export function ProjectWizardPage() {
 
   const finish = async () => {
     if (!profile) return
+    if (!canProceed() && step < STEPS - 1) {
+      push('Заполните обязательные поля', 'error')
+      return
+    }
+    if (wizard.clientMode === 'new' && (!wizard.client.full_name.trim() || !wizard.client.phone.trim())) {
+      push('Укажите клиента', 'error')
+      setWizard({ step: 0 })
+      return
+    }
+    if (wizard.rooms.length === 0) {
+      push('Добавьте хотя бы одно помещение', 'error')
+      setWizard({ step: 2 })
+      return
+    }
     setSaving(true)
     try {
       const id = await saveWizardProject(profile.id)

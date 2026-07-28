@@ -147,6 +147,8 @@ export interface ElectricalPoint {
   room_id: string
   project_id: string
   device_type_id: string | null
+  /** Client-side device code used by the calculation engine (demo / local). */
+  device_code?: string | null
   custom_name: string | null
   quantity: number
   install_height_m: number | null

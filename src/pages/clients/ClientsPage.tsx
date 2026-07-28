@@ -42,12 +42,16 @@ export function ClientsPage() {
           <Button
             className="w-full"
             onClick={() => {
-              if (!profile || !form.full_name || !form.phone) return
+              if (!profile) return
+              if (!form.full_name.trim() || !form.phone.trim()) {
+                push('Укажите имя и телефон', 'error')
+                return
+              }
               upsertClient({
                 id: crypto.randomUUID(),
                 electrician_id: profile.id,
-                full_name: form.full_name,
-                phone: form.phone,
+                full_name: form.full_name.trim(),
+                phone: form.phone.trim(),
                 telegram: form.telegram || null,
                 comment: form.comment || null,
                 city: form.city,

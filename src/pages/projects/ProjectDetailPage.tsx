@@ -8,12 +8,15 @@ import {
   DoorOpen,
   FileText,
   Hammer,
+  Trash2,
   Truck,
 } from 'lucide-react'
 import { Badge, Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAppDataStore } from '@/stores/app-data-store'
-import { formatDate, formatMoney } from '@/lib/utils'
+import { copyToClipboard, formatDate, formatMoney } from '@/lib/utils'
+import { useToastStore } from '@/stores/toast-store'
+import { ConfirmDialog } from '@/components/ui/dialog'
 
 export function ProjectDetailPage() {
   const { id } = useParams()
@@ -21,7 +24,10 @@ export function ProjectDetailPage() {
   const navigate = useNavigate()
   const project = useAppDataStore((s) => s.projects.find((p) => p.id === id))
   const createPublicLink = useAppDataStore((s) => s.createPublicLink)
+  const deleteProject = useAppDataStore((s) => s.deleteProject)
+  const push = useToastStore((s) => s.push)
   const [link, setLink] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const links = useMemo(
     () => [
@@ -103,16 +109,37 @@ export function ProjectDetailPage() {
       <Button
         variant="secondary"
         className="w-full"
-        onClick={() => {
+        onClick={async () => {
           const token = createPublicLink(project.id)
           const url = `${window.location.origin}/estimate/public/${token}`
           setLink(url)
-          void navigator.clipboard.writeText(url)
+          const ok = await copyToClipboard(url)
+          push(ok ? 'Ссылка скопирована' : 'Ссылка создана — скопируйте вручную', ok ? 'success' : 'info')
         }}
       >
         Публичная ссылка на смету
       </Button>
       {link ? <p className="break-all text-xs text-muted">{link}</p> : null}
+
+      <Button variant="danger" className="w-full" onClick={() => setConfirmDelete(true)}>
+        <Trash2 size={16} />
+        {t('common.delete')}
+      </Button>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title={t('common.delete')}
+        description="Проект будет удалён вместе с помещениями и материалами"
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        danger
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => {
+          deleteProject(project.id)
+          setConfirmDelete(false)
+          navigate('/projects')
+        }}
+      />
     </div>
   )
 }

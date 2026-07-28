@@ -1,13 +1,14 @@
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { DEVICE_TYPES } from '@/features/calculation-engine'
-import { useState } from 'react'
+import { resolveDeviceCode } from '@/lib/project-recalc'
 
 export function ProjectPointsPage() {
   const { id = '' } = useParams()
@@ -16,9 +17,16 @@ export function ProjectPointsPage() {
   const rooms = useAppDataStore((s) => s.rooms[id] ?? [])
   const points = useAppDataStore((s) => s.points[id] ?? [])
   const addPoint = useAppDataStore((s) => s.addPoint)
+  const updatePoint = useAppDataStore((s) => s.updatePoint)
+  const deletePoint = useAppDataStore((s) => s.deletePoint)
   const [deviceCode, setDeviceCode] = useState('socket_single')
-  const [roomId, setRoomId] = useState(rooms[0]?.id ?? '')
+  const [roomId, setRoomId] = useState('')
   const [qty, setQty] = useState(1)
+  const [separate, setSeparate] = useState(false)
+
+  useEffect(() => {
+    if (!roomId && rooms[0]?.id) setRoomId(rooms[0].id)
+  }, [rooms, roomId])
 
   return (
     <div className="space-y-5">
@@ -27,13 +35,68 @@ export function ProjectPointsPage() {
         {t('common.back')}
       </button>
       <h1 className="text-3xl font-extrabold">{t('project.wizard.stepPoints')}</h1>
+      {rooms.length === 0 ? (
+        <Card>
+          <p className="text-muted">Сначала добавьте помещения</p>
+          <Button className="mt-3" variant="secondary" onClick={() => navigate(`/projects/${id}/rooms`)}>
+            {t('project.rooms')}
+          </Button>
+        </Card>
+      ) : null}
       {points.map((p) => (
-        <Card key={p.id}>
-          <p className="font-bold">{p.custom_name}</p>
-          <p className="text-sm text-muted">
-            {t('project.wizard.quantity')}: {p.quantity}
-            {p.separate_line ? ` · ${t('project.wizard.separateLine')}` : ''}
-          </p>
+        <Card key={p.id} className="space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="font-bold">{p.custom_name}</p>
+              <p className="text-sm text-muted">
+                {t('project.wizard.quantity')}: {p.quantity}
+                {p.separate_line ? ` · ${t('project.wizard.separateLine')}` : ''}
+              </p>
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => deletePoint(id, p.id)}>
+              <Trash2 size={16} />
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Select
+              label={t('project.rooms')}
+              value={p.room_id}
+              onChange={(e) => updatePoint(id, p.id, { room_id: e.target.value })}
+            >
+              {rooms.map((r) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </Select>
+            <Select
+              label={t('project.wizard.addPoint')}
+              value={resolveDeviceCode(p)}
+              onChange={(e) => {
+                const code = e.target.value
+                updatePoint(id, p.id, {
+                  device_code: code,
+                  custom_name: DEVICE_TYPES.find((d) => d.code === code)?.nameRu ?? code,
+                })
+              }}
+            >
+              {DEVICE_TYPES.map((d) => (
+                <option key={d.code} value={d.code}>{d.nameRu}</option>
+              ))}
+            </Select>
+          </div>
+          <Input
+            label={t('project.wizard.quantity')}
+            type="number"
+            value={p.quantity}
+            onChange={(e) => updatePoint(id, p.id, { quantity: Number(e.target.value) || 1 })}
+          />
+          <label className="flex min-h-11 items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={p.separate_line}
+              onChange={(e) => updatePoint(id, p.id, { separate_line: e.target.checked })}
+            />
+            {t('project.wizard.separateLine')}
+          </label>
         </Card>
       ))}
       <Card className="space-y-3">
@@ -48,24 +111,31 @@ export function ProjectPointsPage() {
           ))}
         </Select>
         <Input label={t('project.wizard.quantity')} type="number" value={qty} onChange={(e) => setQty(Number(e.target.value) || 1)} />
+        <label className="flex min-h-11 items-center gap-2 text-sm font-medium">
+          <input type="checkbox" checked={separate} onChange={(e) => setSeparate(e.target.checked)} />
+          {t('project.wizard.separateLine')}
+        </label>
         <Button
           className="w-full"
           disabled={!roomId}
-          onClick={() =>
+          onClick={() => {
             addPoint(id, {
               id: crypto.randomUUID(),
               room_id: roomId,
               project_id: id,
               device_type_id: null,
+              device_code: deviceCode,
               custom_name: DEVICE_TYPES.find((d) => d.code === deviceCode)?.nameRu ?? deviceCode,
               quantity: qty,
               install_height_m: 0.3,
-              separate_line: false,
+              separate_line: separate,
               comment: null,
               custom_power_w: null,
               photo_url: null,
             })
-          }
+            setQty(1)
+            setSeparate(false)
+          }}
         >
           <Plus size={18} />
           {t('project.wizard.addPoint')}

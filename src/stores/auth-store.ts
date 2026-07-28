@@ -23,6 +23,7 @@ interface AuthState {
   signOut: () => Promise<void>
   enterDemo: () => void
   setRoleLocal: (role: UserRole) => void
+  updateProfileLocal: (patch: Partial<Profile>) => void
 }
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
@@ -71,7 +72,8 @@ export const useAuthStore = create<AuthState>()(
         set({ loading: true })
         try {
           if (!isSupabaseConfigured) {
-            set({ demoMode: true, profile: DEMO_PROFILE })
+            const existing = get().profile
+            set({ demoMode: true, profile: existing ?? DEMO_PROFILE })
             return
           }
 
@@ -81,7 +83,8 @@ export const useAuthStore = create<AuthState>()(
               (await fetchProfile(data.session.user.id)) ?? profileFromSession(data.session.user)
             set({ profile, demoMode: false })
           } else {
-            set({ demoMode: true, profile: DEMO_PROFILE })
+            const existing = get().profile
+            set({ demoMode: true, profile: existing ?? DEMO_PROFILE })
           }
 
           supabase.auth.onAuthStateChange((_event, session) => {
@@ -176,7 +179,11 @@ export const useAuthStore = create<AuthState>()(
       },
 
       resetPassword: async (email) => {
-        if (!isSupabaseConfigured) return
+        if (!isSupabaseConfigured) {
+          throw new Error(
+            'Сброс пароля доступен после подключения Supabase. В демо войдите с любым паролем.',
+          )
+        }
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/login`,
         })
@@ -200,12 +207,24 @@ export const useAuthStore = create<AuthState>()(
         const profile = get().profile
         if (profile) set({ profile: { ...profile, role } })
       },
+
+      updateProfileLocal: (patch) => {
+        const profile = get().profile
+        if (!profile) return
+        set({
+          profile: {
+            ...profile,
+            ...patch,
+            updated_at: new Date().toISOString(),
+          },
+        })
+      },
     }),
     {
       name: 'simchi-auth',
       partialize: (s) => ({
         demoMode: s.demoMode,
-        profile: s.demoMode ? DEMO_PROFILE : null,
+        profile: s.profile,
       }),
     },
   ),

@@ -18,6 +18,10 @@ export function AdminPage() {
   const orders = useAppDataStore((s) => s.orders)
   const projects = useAppDataStore((s) => s.projects)
   const [commission, setCommission] = useState(3)
+  const [auditEvents, setAuditEvents] = useState<Array<{ id: string; at: string; text: string }>>([])
+  const [users, setUsers] = useState([
+    { ...DEMO_PROFILE, role: DEMO_PROFILE.role as string },
+  ])
 
   const tabs: Array<{ id: Tab; label: string }> = [
     { id: 'users', label: t('admin.users') },
@@ -66,16 +70,32 @@ export function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-t border-white/70">
-                  <td className="py-3 font-semibold">{DEMO_PROFILE.full_name}</td>
-                  <td>{DEMO_PROFILE.email}</td>
-                  <td><Badge tone="primary">electrician</Badge></td>
-                  <td>{DEMO_PROFILE.city}</td>
-                  <td>active</td>
-                </tr>
+                {users.map((u) => (
+                  <tr key={u.id} className="border-t border-white/70">
+                    <td className="py-3 font-semibold">{u.full_name}</td>
+                    <td>{u.email}</td>
+                    <td>
+                      <select
+                        className="rounded-xl border border-white/80 bg-white/70 px-2 py-1"
+                        value={u.role}
+                        onChange={(e) =>
+                          setUsers((list) =>
+                            list.map((x) => (x.id === u.id ? { ...x, role: e.target.value } : x)),
+                          )
+                        }
+                      >
+                        <option value="electrician">electrician</option>
+                        <option value="supplier">supplier</option>
+                        <option value="admin">admin</option>
+                      </select>
+                    </td>
+                    <td>{u.city}</td>
+                    <td>active</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
-            <p className="mt-3 text-sm text-muted">Назначение ролей supplier/admin — через SQL/админ API после подключения Supabase.</p>
+            <p className="mt-3 text-sm text-muted">В демо роли меняются локально. В production — через Supabase profiles.</p>
           </Card>
         )}
 
@@ -134,9 +154,12 @@ export function AdminPage() {
             {orders.map((o) => (
               <div key={o.id} className="flex justify-between border-t border-white/70 pt-3 text-sm">
                 <span>{o.suppliers?.name}</span>
-                <span className="font-semibold">{formatMoney(o.commission_total)}</span>
+                <span className="font-semibold">{formatMoney(Math.round(o.subtotal * (commission / 100)))}</span>
               </div>
             ))}
+            <p className="text-sm text-muted">
+              Итого: {formatMoney(orders.reduce((s, o) => s + Math.round(o.subtotal * (commission / 100)), 0))}
+            </p>
           </Card>
         )}
 
@@ -144,15 +167,37 @@ export function AdminPage() {
           <div className="grid gap-3 sm:grid-cols-3">
             <Card><p className="text-sm text-muted">Проекты</p><p className="text-2xl font-extrabold">{projects.length}</p></Card>
             <Card><p className="text-sm text-muted">Заказы</p><p className="text-2xl font-extrabold">{orders.length}</p></Card>
-            <Card><p className="text-sm text-muted">Комиссии</p><p className="text-2xl font-extrabold">{formatMoney(orders.reduce((s, o) => s + o.commission_total, 0))}</p></Card>
+            <Card><p className="text-sm text-muted">Комиссии</p><p className="text-2xl font-extrabold">{formatMoney(orders.reduce((s, o) => s + Math.round(o.subtotal * (commission / 100)), 0))}</p></Card>
           </div>
         )}
 
         {tab === 'audit' && (
-          <Card>
-            <p className="font-semibold">Audit log</p>
-            <p className="mt-2 text-sm text-muted">События пишутся в таблицу audit_logs после применения миграций.</p>
-            <Button className="mt-4" variant="outline" onClick={() => undefined}>Обновить</Button>
+          <Card className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-semibold">Audit log</p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAuditEvents([
+                    { id: crypto.randomUUID(), at: new Date().toISOString(), text: `Просмотр заказов: ${orders.length}` },
+                    { id: crypto.randomUUID(), at: new Date().toISOString(), text: `Проектов в системе: ${projects.length}` },
+                    ...auditEvents,
+                  ].slice(0, 20))
+                }}
+              >
+                Обновить
+              </Button>
+            </div>
+            {auditEvents.length === 0 ? (
+              <p className="text-sm text-muted">Нажмите «Обновить», чтобы зафиксировать текущее состояние.</p>
+            ) : (
+              auditEvents.map((e) => (
+                <div key={e.id} className="border-t border-white/70 pt-2 text-sm">
+                  <p className="font-semibold">{e.text}</p>
+                  <p className="text-xs text-muted">{new Date(e.at).toLocaleString('ru-RU')}</p>
+                </div>
+              ))
+            )}
           </Card>
         )}
       </div>

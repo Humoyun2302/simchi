@@ -22,19 +22,58 @@ export function SupplierCabinetPage() {
   const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('orders')
   const supplier = DEMO_SUPPLIERS[0]
-  const orders = useAppDataStore((s) => s.orders.filter((o) => o.supplier_id === supplier.id || s.orders.length > 0))
+  const orders = useAppDataStore((s) => s.orders.filter((o) => o.supplier_id === supplier.id))
   const updateOrderStatus = useAppDataStore((s) => s.updateOrderStatus)
   const push = useToastStore((s) => s.push)
-  const [products, setProducts] = useState([
-    { id: '1', name: 'Кабель ВВГнг 3×2.5', price: 18500, stock: 1200 },
-    { id: '2', name: 'Розетка одинарная', price: 45000, stock: 340 },
-    { id: '3', name: 'Автомат 16A', price: 65000, stock: 180 },
-  ])
-  const [company, setCompany] = useState({
-    name: supplier.name,
-    phone: supplier.phone ?? '',
-    description: supplier.description ?? '',
+  const [products, setProducts] = useState(() => {
+    try {
+      const raw = localStorage.getItem('simchi-supplier-products')
+      if (raw) return JSON.parse(raw) as Array<{ id: string; name: string; price: number; stock: number }>
+    } catch {
+      // ignore
+    }
+    return [
+      { id: '1', name: 'Кабель ВВГнг 3×2.5', price: 18500, stock: 1200 },
+      { id: '2', name: 'Розетка одинарная', price: 45000, stock: 340 },
+      { id: '3', name: 'Автомат 16A', price: 65000, stock: 180 },
+    ]
   })
+  const [company, setCompany] = useState(() => {
+    try {
+      const raw = localStorage.getItem('simchi-supplier-company')
+      if (raw) return JSON.parse(raw) as { name: string; phone: string; description: string }
+    } catch {
+      // ignore
+    }
+    return {
+      name: supplier.name,
+      phone: supplier.phone ?? '',
+      description: supplier.description ?? '',
+    }
+  })
+  const [branches, setBranches] = useState(() => {
+    try {
+      const raw = localStorage.getItem('simchi-supplier-branches')
+      if (raw) return JSON.parse(raw) as Array<{ id: string; name: string; address: string }>
+    } catch {
+      // ignore
+    }
+    return [
+      { id: 'b1', name: 'Центральный склад', address: supplier.address ?? '' },
+      { id: 'b2', name: 'Филиал Чиланзар', address: 'Чиланзар-8, павильон 12' },
+    ]
+  })
+  const [branchName, setBranchName] = useState('')
+  const [branchAddress, setBranchAddress] = useState('')
+
+  const persistProducts = (next: typeof products) => {
+    setProducts(next)
+    localStorage.setItem('simchi-supplier-products', JSON.stringify(next))
+  }
+  const persistBranches = (next: typeof branches) => {
+    setBranches(next)
+    localStorage.setItem('simchi-supplier-branches', JSON.stringify(next))
+  }
 
   const sales = useMemo(() => orders.reduce((s, o) => s + o.grand_total, 0), [orders])
   const commission = useMemo(() => orders.reduce((s, o) => s + o.commission_total, 0), [orders])
@@ -73,17 +112,44 @@ export function SupplierCabinetPage() {
             <Input label="Название" value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} />
             <Input label="Телефон" value={company.phone} onChange={(e) => setCompany({ ...company, phone: e.target.value })} />
             <Textarea label="Описание" value={company.description} onChange={(e) => setCompany({ ...company, description: e.target.value })} />
-            <Button onClick={() => push(t('common.success'), 'success')}>{t('common.save')}</Button>
+            <Button
+              onClick={() => {
+                localStorage.setItem('simchi-supplier-company', JSON.stringify(company))
+                push(t('common.success'), 'success')
+              }}
+            >
+              {t('common.save')}
+            </Button>
           </Card>
         )}
 
         {tab === 'branches' && (
-          <Card className="space-y-2">
-            <p className="font-bold">Центральный склад</p>
-            <p className="text-sm text-muted">{supplier.address}</p>
-            <p className="font-bold mt-4">Филиал Чиланзар</p>
-            <p className="text-sm text-muted">Чиланзар-8, павильон 12</p>
-          </Card>
+          <div className="space-y-3">
+            {branches.map((b) => (
+              <Card key={b.id} className="space-y-1">
+                <p className="font-bold">{b.name}</p>
+                <p className="text-sm text-muted">{b.address}</p>
+              </Card>
+            ))}
+            <Card className="space-y-3">
+              <Input label="Название филиала" value={branchName} onChange={(e) => setBranchName(e.target.value)} />
+              <Input label="Адрес" value={branchAddress} onChange={(e) => setBranchAddress(e.target.value)} />
+              <Button
+                onClick={() => {
+                  if (!branchName.trim()) return
+                  persistBranches([
+                    ...branches,
+                    { id: crypto.randomUUID(), name: branchName.trim(), address: branchAddress.trim() },
+                  ])
+                  setBranchName('')
+                  setBranchAddress('')
+                  push(t('common.success'), 'success')
+                }}
+              >
+                {t('common.add')}
+              </Button>
+            </Card>
+          </div>
         )}
 
         {tab === 'products' && (
@@ -109,13 +175,13 @@ export function SupplierCabinetPage() {
                   const imported = lines.map((line, i) => {
                     const cols = line.split(',')
                     return {
-                      id: `imp-${i}`,
+                      id: `imp-${Date.now()}-${i}`,
                       name: cols[1] || `Товар ${i + 1}`,
                       price: Number(cols[5]) || 0,
                       stock: Number(cols[6]) || 0,
                     }
                   })
-                  setProducts((p) => [...imported, ...p])
+                  persistProducts([...imported, ...products])
                   push(`Импортировано: ${imported.length}`, 'success')
                 }}
               />
@@ -123,8 +189,22 @@ export function SupplierCabinetPage() {
             {products.map((p) => (
               <Card key={p.id} className="grid gap-3 sm:grid-cols-3">
                 <p className="font-bold sm:col-span-3">{p.name}</p>
-                <Input label="Цена" type="number" value={p.price} onChange={(e) => setProducts((list) => list.map((x) => (x.id === p.id ? { ...x, price: Number(e.target.value) || 0 } : x)))} />
-                <Input label="Остаток" type="number" value={p.stock} onChange={(e) => setProducts((list) => list.map((x) => (x.id === p.id ? { ...x, stock: Number(e.target.value) || 0 } : x)))} />
+                <Input
+                  label="Цена"
+                  type="number"
+                  value={p.price}
+                  onChange={(e) =>
+                    persistProducts(products.map((x) => (x.id === p.id ? { ...x, price: Number(e.target.value) || 0 } : x)))
+                  }
+                />
+                <Input
+                  label="Остаток"
+                  type="number"
+                  value={p.stock}
+                  onChange={(e) =>
+                    persistProducts(products.map((x) => (x.id === p.id ? { ...x, stock: Number(e.target.value) || 0 } : x)))
+                  }
+                />
                 <p className="self-end font-extrabold text-primary">{formatMoney(p.price)}</p>
               </Card>
             ))}
