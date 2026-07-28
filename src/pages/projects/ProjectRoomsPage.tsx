@@ -8,12 +8,13 @@ import { Select } from '@/components/ui/select'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { useState } from 'react'
 import type { RoomType } from '@/types/database'
+import { EMPTY_LIST } from '@/lib/empty'
 
 export function ProjectRoomsPage() {
   const { id = '' } = useParams()
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const rooms = useAppDataStore((s) => s.rooms[id] ?? [])
+  const rooms = useAppDataStore((s) => s.rooms[id] ?? EMPTY_LIST)
   const addRoom = useAppDataStore((s) => s.addRoom)
   const updateRoom = useAppDataStore((s) => s.updateRoom)
   const deleteRoom = useAppDataStore((s) => s.deleteRoom)

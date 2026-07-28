@@ -8,6 +8,7 @@ import { useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney } from '@/lib/utils'
 import { useState } from 'react'
 import type { ProjectWorkItem } from '@/types/database'
+import { EMPTY_LIST } from '@/lib/empty'
 
 const DEFAULT_WORKS = [
   { work_type: 'socket_install', name: 'Установка розетки', unit_price: 85_000 },
@@ -22,7 +23,7 @@ export function ProjectWorksPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const project = useAppDataStore((s) => s.projects.find((p) => p.id === id))
-  const works = useAppDataStore((s) => s.works[id] ?? [])
+  const works = useAppDataStore((s) => s.works[id] ?? EMPTY_LIST)
   const setWorks = useAppDataStore((s) => s.setWorks)
   const updateProject = useAppDataStore((s) => s.updateProject)
   const [name, setName] = useState('')

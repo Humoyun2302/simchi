@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { useAuthStore } from '@/stores/auth-store'
 import { Spinner } from '@/components/ui/card'
 import { LoginPage } from '@/pages/auth/LoginPage'
@@ -30,6 +31,10 @@ import { PublicEstimatePage } from '@/pages/estimate/PublicEstimatePage'
 import { AdminPage } from '@/pages/admin/AdminPage'
 import { SupplierCabinetPage } from '@/pages/supplier/SupplierCabinetPage'
 
+function Page({ children }: { children: ReactNode }) {
+  return <ErrorBoundary>{children}</ErrorBoundary>
+}
+
 export default function App() {
   const init = useAuthStore((s) => s.init)
   const initialized = useAuthStore((s) => s.initialized)
@@ -51,38 +56,192 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/estimate/public/:token" element={<PublicEstimatePage />} />
+      <Route
+        path="/estimate/public/:token"
+        element={
+          <Page>
+            <PublicEstimatePage />
+          </Page>
+        }
+      />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
-          <Route index element={<HomePage />} />
-          <Route path="projects" element={<ProjectsPage />} />
-          <Route path="projects/new" element={<ProjectWizardPage />} />
-          <Route path="projects/:id" element={<ProjectDetailPage />} />
-          <Route path="projects/:id/rooms" element={<ProjectRoomsPage />} />
-          <Route path="projects/:id/points" element={<ProjectPointsPage />} />
-          <Route path="projects/:id/materials" element={<ProjectMaterialsPage />} />
-          <Route path="projects/:id/works" element={<ProjectWorksPage />} />
-          <Route path="projects/:id/suppliers" element={<ProjectSuppliersPage />} />
-          <Route path="projects/:id/estimate" element={<ProjectEstimatePage />} />
-          <Route path="clients" element={<ClientsPage />} />
-          <Route path="clients/:id" element={<ClientDetailPage />} />
-          <Route path="catalog" element={<CatalogPage />} />
-          <Route path="suppliers" element={<SuppliersPage />} />
-          <Route path="suppliers/:id" element={<SupplierDetailPage />} />
-          <Route path="orders" element={<OrdersPage />} />
-          <Route path="orders/:id" element={<OrderDetailPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route
+            index
+            element={
+              <Page>
+                <HomePage />
+              </Page>
+            }
+          />
+          <Route
+            path="projects"
+            element={
+              <Page>
+                <ProjectsPage />
+              </Page>
+            }
+          />
+          <Route
+            path="projects/new"
+            element={
+              <Page>
+                <ProjectWizardPage />
+              </Page>
+            }
+          />
+          <Route
+            path="projects/:id"
+            element={
+              <Page>
+                <ProjectDetailPage />
+              </Page>
+            }
+          />
+          <Route
+            path="projects/:id/rooms"
+            element={
+              <Page>
+                <ProjectRoomsPage />
+              </Page>
+            }
+          />
+          <Route
+            path="projects/:id/points"
+            element={
+              <Page>
+                <ProjectPointsPage />
+              </Page>
+            }
+          />
+          <Route
+            path="projects/:id/materials"
+            element={
+              <Page>
+                <ProjectMaterialsPage />
+              </Page>
+            }
+          />
+          <Route
+            path="projects/:id/works"
+            element={
+              <Page>
+                <ProjectWorksPage />
+              </Page>
+            }
+          />
+          <Route
+            path="projects/:id/suppliers"
+            element={
+              <Page>
+                <ProjectSuppliersPage />
+              </Page>
+            }
+          />
+          <Route
+            path="projects/:id/estimate"
+            element={
+              <Page>
+                <ProjectEstimatePage />
+              </Page>
+            }
+          />
+          <Route
+            path="clients"
+            element={
+              <Page>
+                <ClientsPage />
+              </Page>
+            }
+          />
+          <Route
+            path="clients/:id"
+            element={
+              <Page>
+                <ClientDetailPage />
+              </Page>
+            }
+          />
+          <Route
+            path="catalog"
+            element={
+              <Page>
+                <CatalogPage />
+              </Page>
+            }
+          />
+          <Route
+            path="suppliers"
+            element={
+              <Page>
+                <SuppliersPage />
+              </Page>
+            }
+          />
+          <Route
+            path="suppliers/:id"
+            element={
+              <Page>
+                <SupplierDetailPage />
+              </Page>
+            }
+          />
+          <Route
+            path="orders"
+            element={
+              <Page>
+                <OrdersPage />
+              </Page>
+            }
+          />
+          <Route
+            path="orders/:id"
+            element={
+              <Page>
+                <OrderDetailPage />
+              </Page>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <Page>
+                <ProfilePage />
+              </Page>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <Page>
+                <SettingsPage />
+              </Page>
+            }
+          />
         </Route>
       </Route>
 
       <Route element={<ProtectedRoute roles={['admin']} />}>
-        <Route path="/admin" element={<AdminPage />} />
+        <Route
+          path="/admin"
+          element={
+            <Page>
+              <AdminPage />
+            </Page>
+          }
+        />
       </Route>
 
       <Route element={<ProtectedRoute roles={['supplier', 'admin']} />}>
-        <Route path="/supplier" element={<SupplierCabinetPage />} />
+        <Route
+          path="/supplier"
+          element={
+            <Page>
+              <SupplierCabinetPage />
+            </Page>
+          }
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

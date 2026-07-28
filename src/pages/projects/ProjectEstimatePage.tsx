@@ -8,15 +8,16 @@ import { useAppDataStore } from '@/stores/app-data-store'
 import { copyToClipboard, formatDate, formatMoney } from '@/lib/utils'
 import { exportEstimateCsv, exportEstimatePdf, exportEstimateXlsx } from '@/features/estimates/export'
 import { useToastStore } from '@/stores/toast-store'
+import { EMPTY_LIST } from '@/lib/empty'
 
 export function ProjectEstimatePage() {
   const { id = '' } = useParams()
   const { t } = useTranslation()
   const navigate = useNavigate()
   const project = useAppDataStore((s) => s.projects.find((p) => p.id === id))
-  const materials = useAppDataStore((s) => s.materials[id] ?? [])
-  const works = useAppDataStore((s) => s.works[id] ?? [])
-  const rooms = useAppDataStore((s) => s.rooms[id] ?? [])
+  const materials = useAppDataStore((s) => s.materials[id] ?? EMPTY_LIST)
+  const works = useAppDataStore((s) => s.works[id] ?? EMPTY_LIST)
+  const rooms = useAppDataStore((s) => s.rooms[id] ?? EMPTY_LIST)
   const createPublicLink = useAppDataStore((s) => s.createPublicLink)
   const updateProject = useAppDataStore((s) => s.updateProject)
   const recalculateProject = useAppDataStore((s) => s.recalculateProject)

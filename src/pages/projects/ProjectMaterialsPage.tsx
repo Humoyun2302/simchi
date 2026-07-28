@@ -11,6 +11,7 @@ import { explainLine, type MaterialLine } from '@/features/calculation-engine'
 import { calculateForProject } from '@/lib/project-recalc'
 import { ConfirmDialog } from '@/components/ui/dialog'
 import type { MaterialCategory, MaterialRequirement } from '@/types/database'
+import { EMPTY_LIST } from '@/lib/empty'
 
 type MaterialView = {
   id: string
@@ -31,8 +32,8 @@ export function ProjectMaterialsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const project = useAppDataStore((s) => s.projects.find((p) => p.id === id))
-  const rooms = useAppDataStore((s) => s.rooms[id] ?? [])
-  const points = useAppDataStore((s) => s.points[id] ?? [])
+  const rooms = useAppDataStore((s) => s.rooms[id] ?? EMPTY_LIST)
+  const points = useAppDataStore((s) => s.points[id] ?? EMPTY_LIST)
   const materials = useAppDataStore((s) => s.materials[id])
   const setMaterials = useAppDataStore((s) => s.setMaterials)
   const updateProject = useAppDataStore((s) => s.updateProject)

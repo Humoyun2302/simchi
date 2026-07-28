@@ -9,13 +9,18 @@ import { useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney } from '@/lib/utils'
 import { exportEstimatePdf } from '@/features/estimates/export'
 import { useToastStore } from '@/stores/toast-store'
+import { EMPTY_LIST } from '@/lib/empty'
 
 export function PublicEstimatePage() {
   const { token = '' } = useParams()
   const { t } = useTranslation()
   const estimate = useAppDataStore((s) => s.publicEstimates[token])
-  const materials = useAppDataStore((s) => (estimate ? s.materials[estimate.projectId] ?? [] : []))
-  const works = useAppDataStore((s) => (estimate ? s.works[estimate.projectId] ?? [] : []))
+  const materials = useAppDataStore((s) =>
+    estimate ? s.materials[estimate.projectId] ?? EMPTY_LIST : EMPTY_LIST,
+  )
+  const works = useAppDataStore((s) =>
+    estimate ? s.works[estimate.projectId] ?? EMPTY_LIST : EMPTY_LIST,
+  )
   const respond = useAppDataStore((s) => s.respondPublicEstimate)
   const push = useToastStore((s) => s.push)
   const [comment, setComment] = useState('')

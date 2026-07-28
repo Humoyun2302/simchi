@@ -7,6 +7,7 @@ import { useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney, formatDate } from '@/lib/utils'
 import { useToastStore } from '@/stores/toast-store'
 import type { OrderStatus } from '@/types/database'
+import { EMPTY_LIST } from '@/lib/empty'
 
 const ELECTRICIAN_ACTIONS: OrderStatus[] = ['cancelled', 'received', 'partially_returned', 'returned']
 
@@ -16,7 +17,9 @@ export function OrderDetailPage() {
   const navigate = useNavigate()
   const order = useAppDataStore((s) => s.orders.find((o) => o.id === id))
   const project = useAppDataStore((s) => s.projects.find((p) => p.id === order?.project_id))
-  const materials = useAppDataStore((s) => (order?.project_id ? s.materials[order.project_id] ?? [] : []))
+  const materials = useAppDataStore((s) =>
+    order?.project_id ? s.materials[order.project_id] ?? EMPTY_LIST : EMPTY_LIST,
+  )
   const updateOrderStatus = useAppDataStore((s) => s.updateOrderStatus)
   const push = useToastStore((s) => s.push)
 

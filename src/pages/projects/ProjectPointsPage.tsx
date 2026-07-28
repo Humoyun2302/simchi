@@ -9,13 +9,14 @@ import { Input } from '@/components/ui/input'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { DEVICE_TYPES } from '@/features/calculation-engine'
 import { resolveDeviceCode } from '@/lib/project-recalc'
+import { EMPTY_LIST } from '@/lib/empty'
 
 export function ProjectPointsPage() {
   const { id = '' } = useParams()
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const rooms = useAppDataStore((s) => s.rooms[id] ?? [])
-  const points = useAppDataStore((s) => s.points[id] ?? [])
+  const rooms = useAppDataStore((s) => s.rooms[id] ?? EMPTY_LIST)
+  const points = useAppDataStore((s) => s.points[id] ?? EMPTY_LIST)
   const addPoint = useAppDataStore((s) => s.addPoint)
   const updatePoint = useAppDataStore((s) => s.updatePoint)
   const deletePoint = useAppDataStore((s) => s.deletePoint)
