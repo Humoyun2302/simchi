@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: #f5f8ff;
+  --color-bg-soft: #eaf2ff;
+  --color-card: rgb(255 255 255 / 0.78);
+  --color-text: #101828;
+  --color-muted: #748094;
+  --color-primary: #3f7ff1;
+  --color-primary-soft: #dceaff;
+  --color-success: #cff7dc;
+  --color-danger: #ffe0e0;
+  --color-border: rgb(255 255 255 / 0.85);
+  --color-success-text: #067647;
+  --color-danger-text: #b42318;
+  --color-warning: #fef0c7;
+  --color-warning-text: #b54708;
+
+  --radius-card: 28px;
+  --radius-btn: 20px;
+  --shadow-soft: 0 12px 40px rgb(63 127 241 / 0.08), 0 2px 8px rgb(16 24 40 / 0.04);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    background:
+      radial-gradient(ellipse 80% 50% at 10% -10%, #dceaff 0%, transparent 55%),
+      radial-gradient(ellipse 70% 40% at 100% 0%, #e8f1ff 0%, transparent 50%),
+      linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-soft) 100%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}

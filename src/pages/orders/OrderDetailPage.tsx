@@ -1,0 +1,47 @@
+import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { ArrowLeft } from 'lucide-react'
+import { Card, Badge } from '@/components/ui/card'
+import { useAppDataStore } from '@/stores/app-data-store'
+import { formatMoney, formatDate } from '@/lib/utils'
+
+export function OrderDetailPage() {
+  const { id } = useParams()
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const order = useAppDataStore((s) => s.orders.find((o) => o.id === id))
+
+  if (!order) return <Card>{t('common.empty')}</Card>
+
+  return (
+    <div className="space-y-5">
+      <button type="button" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-muted" onClick={() => navigate('/orders')}>
+        <ArrowLeft size={16} />
+        {t('common.back')}
+      </button>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-3xl font-extrabold">{order.suppliers?.name}</h1>
+        <Badge tone="primary">{t(`orders.statuses.${order.status}`)}</Badge>
+      </div>
+      <Card className="grid gap-3 sm:grid-cols-2">
+        <Info label="Дата" value={formatDate(order.created_at)} />
+        <Info label="Подытог" value={formatMoney(order.subtotal)} />
+        <Info label={t('suppliers.discount')} value={formatMoney(order.discount_total)} />
+        <Info label={t('suppliers.delivery')} value={formatMoney(order.delivery_total)} />
+        <Info label={t('suppliers.total')} value={formatMoney(order.grand_total)} />
+      </Card>
+      <Card className="bg-primary-soft/50">
+        <p className="text-sm text-muted">Комиссия SIMCHI не отображается клиенту в смете. Здесь для электрика скрыта в MVP-заказе.</p>
+      </Card>
+    </div>
+  )
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs text-muted">{label}</p>
+      <p className="font-semibold">{value}</p>
+    </div>
+  )
+}
