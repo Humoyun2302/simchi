@@ -54,12 +54,12 @@ export function PageHeader({
   actions?: ReactNode
 }) {
   return (
-    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-text sm:text-4xl">{title}</h1>
-        {subtitle ? <p className="mt-1 text-muted">{subtitle}</p> : null}
+    <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="text-[1.75rem] font-extrabold leading-tight tracking-tight text-text sm:text-4xl">{title}</h1>
+        {subtitle ? <p className="mt-1 text-sm text-muted sm:text-base">{subtitle}</p> : null}
       </div>
-      {actions}
+      {actions ? <div className="w-full sm:w-auto">{actions}</div> : null}
     </div>
   )
 }
@@ -74,10 +74,10 @@ export function StatCard({
   hint?: string
 }) {
   return (
-    <div className="glass rounded-[28px] p-4 min-w-0">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-2 text-xl font-extrabold text-text truncate sm:text-2xl">{value}</p>
-      {hint ? <p className="mt-1 text-xs text-primary font-medium">{hint}</p> : null}
+    <div className="glass min-w-0 rounded-[22px] p-3.5 sm:rounded-[28px] sm:p-4">
+      <p className="text-xs text-muted sm:text-sm">{label}</p>
+      <p className="mt-1.5 text-base font-extrabold leading-tight text-text sm:mt-2 sm:text-2xl">{value}</p>
+      {hint ? <p className="mt-1 text-xs font-medium text-primary">{hint}</p> : null}
     </div>
   )
 }
@@ -92,7 +92,7 @@ export function FilterPills({
   onChange: (value: string) => void
 }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:px-0">
       {options.map((opt) => {
         const active = opt.value === value
         return (
@@ -101,8 +101,8 @@ export function FilterPills({
             type="button"
             onClick={() => onChange(opt.value)}
             className={cn(
-              'whitespace-nowrap rounded-full px-4 min-h-11 text-sm font-semibold transition',
-              active ? 'bg-primary text-white shadow-md' : 'bg-white/70 text-muted hover:bg-white',
+              'shrink-0 whitespace-nowrap rounded-full px-4 min-h-10 text-sm font-semibold transition active:scale-[0.98]',
+              active ? 'bg-primary text-white shadow-md' : 'bg-white/70 text-muted',
             )}
           >
             {opt.label}
@@ -127,7 +127,8 @@ export function SearchBar({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full min-h-12 rounded-full border border-white/80 bg-white/70 px-5 text-text outline-none placeholder:text-muted focus:ring-2 focus:ring-primary/25"
+      enterKeyHint="search"
+      className="w-full min-h-12 rounded-full border border-white/80 bg-white/70 px-5 text-text outline-none placeholder:text-muted/70 focus:ring-2 focus:ring-primary/25"
     />
   )
 }

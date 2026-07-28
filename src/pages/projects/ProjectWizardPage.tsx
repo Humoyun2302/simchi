@@ -67,7 +67,7 @@ export function ProjectWizardPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       <button type="button" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-muted" onClick={back}>
         <ArrowLeft size={16} />
         {t('common.back')}
@@ -77,9 +77,9 @@ export function ProjectWizardPage() {
         <p className="text-sm font-semibold text-primary">
           {step + 1} / {STEPS}
         </p>
-        <h1 className="text-3xl font-extrabold">{titles[step]}</h1>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/70">
-          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${((step + 1) / STEPS) * 100}%` }} />
+        <h1 className="text-[1.6rem] font-extrabold leading-tight sm:text-3xl">{titles[step]}</h1>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/70">
+          <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${((step + 1) / STEPS) * 100}%` }} />
         </div>
       </div>
 
@@ -337,18 +337,18 @@ export function ProjectWizardPage() {
         </div>
       )}
 
-      <div className="flex gap-3 pb-4">
-        <Button variant="outline" className="flex-1" onClick={back}>
+      <div className="sticky-actions flex gap-3">
+        <Button variant="outline" className="min-h-14 flex-1" onClick={back}>
           <ArrowLeft size={16} />
           {t('common.back')}
         </Button>
         {step < STEPS - 1 ? (
-          <Button className="flex-1" onClick={next}>
+          <Button className="min-h-14 flex-[1.4]" onClick={next}>
             {t('common.next')}
             <ArrowRight size={16} />
           </Button>
         ) : (
-          <Button className="flex-1" disabled={saving} onClick={() => void finish()}>
+          <Button className="min-h-14 flex-[1.4]" disabled={saving} onClick={() => void finish()}>
             {t('common.save')}
           </Button>
         )}

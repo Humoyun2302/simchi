@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Home,
@@ -30,12 +30,18 @@ const desktopLinks = [
   { to: '/settings', icon: Settings, key: 'settings' as const },
 ]
 
+function shouldHideMobileNav(pathname: string) {
+  return pathname === '/projects/new'
+}
+
 export function AppShell() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const profile = useAuthStore((s) => s.profile)
   const toasts = useToastStore((s) => s.items)
   const dismiss = useToastStore((s) => s.dismiss)
+  const hideNav = shouldHideMobileNav(location.pathname)
 
   return (
     <div className="min-h-dvh lg:flex">
@@ -78,28 +84,38 @@ export function AppShell() {
       </aside>
 
       <div className="flex min-h-dvh flex-1 flex-col">
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-4 sm:px-6 lg:pb-8 lg:pt-6">
+        <main
+          className={cn(
+            'mx-auto w-full max-w-6xl flex-1 px-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 lg:pb-8 lg:pt-6',
+            hideNav ? 'pb-6' : 'pb-nav lg:pb-8',
+          )}
+        >
           <Outlet />
         </main>
 
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/70 bg-white/75 backdrop-blur-xl safe-bottom lg:hidden">
-          <div className="mx-auto grid max-w-lg grid-cols-5 items-end px-2 pt-2">
-            <MobileItem to="/" icon={Home} label={t('nav.home')} />
-            <MobileItem to="/projects" icon={FolderKanban} label={t('nav.projects')} />
-            <button
-              type="button"
-              onClick={() => navigate('/projects/new')}
-              className="-mt-6 flex flex-col items-center"
-            >
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-[0_12px_28px_rgb(63_127_241_/_0.4)]">
-                <Plus size={26} />
-              </span>
-              <span className="mt-1 text-[10px] font-semibold text-primary">{t('nav.newCalc')}</span>
-            </button>
-            <MobileItem to="/orders" icon={Package} label={t('nav.orders')} />
-            <MobileItem to="/profile" icon={User} label={t('nav.profile')} />
-          </div>
-        </nav>
+        {!hideNav ? (
+          <nav
+            className="fixed inset-x-0 bottom-0 z-40 border-t border-white/70 bg-white/85 backdrop-blur-xl safe-bottom lg:hidden"
+            style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+          >
+            <div className="mx-auto grid h-16 max-w-lg grid-cols-5 items-center px-1">
+              <MobileItem to="/" icon={Home} label={t('nav.home')} />
+              <MobileItem to="/projects" icon={FolderKanban} label={t('nav.projects')} />
+              <button
+                type="button"
+                aria-label={t('nav.newCalc')}
+                onClick={() => navigate('/projects/new')}
+                className="flex flex-col items-center justify-center"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-[0_10px_24px_rgb(63_127_241_/_0.35)] active:scale-95">
+                  <Plus size={24} strokeWidth={2.5} />
+                </span>
+              </button>
+              <MobileItem to="/orders" icon={Package} label={t('nav.orders')} />
+              <MobileItem to="/profile" icon={User} label={t('nav.profile')} />
+            </div>
+          </nav>
+        ) : null}
       </div>
 
       <ToastViewport items={toasts} onDismiss={dismiss} />
@@ -114,13 +130,17 @@ function MobileItem({ to, icon: Icon, label }: { to: string; icon: typeof Home; 
       end={to === '/'}
       className={({ isActive }) =>
         cn(
-          'flex min-h-11 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold text-muted',
+          'flex min-h-12 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-semibold leading-none text-muted',
           isActive && 'text-primary',
         )
       }
     >
-      <Icon size={20} />
-      {label}
+      {({ isActive }) => (
+        <>
+          <Icon size={22} strokeWidth={isActive ? 2.4 : 2} />
+          <span className="max-w-full truncate">{label}</span>
+        </>
+      )}
     </NavLink>
   )
 }

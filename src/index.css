@@ -28,10 +28,16 @@
     box-sizing: border-box;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   html,
   body,
   #root {
     min-height: 100%;
+    min-height: 100dvh;
   }
 
   body {
@@ -44,6 +50,8 @@
       linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-soft) 100%);
     background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
   }
 
   button,
@@ -52,6 +60,24 @@
   select,
   textarea {
     font: inherit;
+  }
+
+  /* Prevent iOS zoom on focus */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(63 127 241 / 0.45);
+    outline-offset: 2px;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 }
 
@@ -64,7 +90,44 @@
     box-shadow: var(--shadow-soft);
   }
 
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
   .safe-bottom {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pb-nav {
+    padding-bottom: calc(5.75rem + env(safe-area-inset-bottom));
+  }
+
+  .sticky-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, transparent 0%, rgb(245 248 255 / 0.92) 28%, rgb(234 242 255 / 0.96) 100%);
+    backdrop-filter: blur(10px);
+  }
+
+  @media (min-width: 640px) {
+    .sticky-actions {
+      margin-left: -1.5rem;
+      margin-right: -1.5rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
   }
 }

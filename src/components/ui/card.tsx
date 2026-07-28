@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import type { HTMLAttributes } from 'react'
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('glass rounded-[28px] p-5', className)} {...props} />
+  return <div className={cn('glass rounded-[26px] p-4 sm:rounded-[28px] sm:p-5', className)} {...props} />
 }
 
 export function Badge({

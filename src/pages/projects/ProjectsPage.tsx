@@ -23,7 +23,7 @@ export function ProjectsPage() {
         title={t('nav.projects')}
         subtitle={t('home.subtitle')}
         actions={
-          <Button onClick={() => navigate('/projects/new')}>
+          <Button className="w-full sm:w-auto" onClick={() => navigate('/projects/new')}>
             <Plus size={18} />
             {t('home.newCalc')}
           </Button>
@@ -45,7 +45,7 @@ export function ProjectsPage() {
       {filtered.length === 0 ? (
         <EmptyState title={t('common.empty')} />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
           {filtered.map((p) => (
             <ProjectCard key={p.id} project={p} />
           ))}

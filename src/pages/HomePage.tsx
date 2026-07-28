@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Filter, LogIn, Plus, Settings } from 'lucide-react'
-import { Logo, FilterPills, SearchBar, StatCard } from '@/components/ui/logo'
+import { LogIn, Plus, Search, Settings } from 'lucide-react'
+import { Logo, FilterPills, EmptyState } from '@/components/ui/logo'
 import { Button } from '@/components/ui/button'
 import { ProjectCard } from '@/components/projects/ProjectCard'
-import { EmptyState } from '@/components/ui/logo'
 import { useAuthStore } from '@/stores/auth-store'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { filterProjects, getHomeStats } from '@/stores/demo-data'
-import { formatMoney } from '@/lib/utils'
+import { cn, formatMoneyCompact } from '@/lib/utils'
 
 export function HomePage() {
   const { t } = useTranslation()
@@ -20,7 +19,6 @@ export function HomePage() {
   const load = useAppDataStore((s) => s.load)
   const [filter, setFilter] = useState('all')
   const [query, setQuery] = useState('')
-  const [showFilters, setShowFilters] = useState(true)
 
   useEffect(() => {
     if (profile) void load(profile.id, demoMode)
@@ -38,54 +36,90 @@ export function HomePage() {
     { value: 'completed', label: t('home.filters.completed') },
   ]
 
+  const statItems = [
+    { label: t('home.stats.estimatesTotal'), value: formatMoneyCompact(stats.estimatesTotal) },
+    { label: t('home.stats.materialsOrdered'), value: formatMoneyCompact(stats.materialsOrdered) },
+    { label: t('home.stats.clientSavings'), value: formatMoneyCompact(stats.clientSavings) },
+    { label: t('home.stats.activeProjects'), value: String(stats.activeProjects) },
+  ]
+
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <Logo />
-        <div className="flex gap-2">
+    <div className="space-y-4 sm:space-y-5">
+      <header className="flex items-center justify-between gap-2">
+        <Logo size="sm" className="sm:text-2xl" />
+        <div className="flex items-center gap-1.5">
           {demoMode ? (
             <Link
               to="/login"
-              className="inline-flex h-11 items-center gap-1.5 rounded-2xl bg-white/70 px-3 text-sm font-semibold text-primary hover:bg-white"
+              aria-label={t('auth.login')}
+              className="inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-2xl bg-white/70 px-3 text-sm font-semibold text-primary"
             >
-              <LogIn size={16} />
-              {t('auth.login')}
+              <LogIn size={18} />
+              <span className="hidden xs:inline sm:inline">{t('auth.login')}</span>
             </Link>
           ) : null}
-          <Button variant="ghost" size="icon" aria-label={t('common.filters')} onClick={() => setShowFilters((v) => !v)}>
-            <Filter size={18} />
-          </Button>
-          <Link to="/settings" className="inline-flex h-11 w-11 items-center justify-center rounded-2xl text-muted hover:bg-white/50" aria-label={t('common.settings')}>
+          <Link
+            to="/settings"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/50 text-muted"
+            aria-label={t('common.settings')}
+          >
             <Settings size={18} />
           </Link>
         </div>
-      </div>
+      </header>
 
-      <Button className="w-full" onClick={() => navigate('/projects/new')}>
-        <Plus size={20} />
+      <section>
+        <h1 className="text-[1.75rem] font-extrabold leading-tight tracking-tight sm:text-4xl">
+          {t('home.title')}
+        </h1>
+        <p className="mt-1 text-sm text-muted sm:text-base">{t('home.subtitle')}</p>
+      </section>
+
+      <Button className="w-full shadow-[0_12px_28px_rgb(63_127_241_/_0.28)]" onClick={() => navigate('/projects/new')}>
+        <Plus size={22} strokeWidth={2.5} />
         {t('home.newCalc')}
       </Button>
 
-      <SearchBar value={query} onChange={setQuery} placeholder={t('common.search')} />
-
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">{t('home.title')}</h1>
-        <p className="mt-1 text-muted">{t('home.subtitle')}</p>
+      <div className="relative">
+        <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t('common.search')}
+          enterKeyHint="search"
+          className="w-full min-h-12 rounded-full border border-white/80 bg-white/70 pl-11 pr-4 text-text outline-none placeholder:text-muted/80 focus:ring-2 focus:ring-primary/25"
+        />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label={t('home.stats.estimatesTotal')} value={formatMoney(stats.estimatesTotal)} />
-        <StatCard label={t('home.stats.materialsOrdered')} value={formatMoney(stats.materialsOrdered)} />
-        <StatCard label={t('home.stats.clientSavings')} value={formatMoney(stats.clientSavings)} />
-        <StatCard label={t('home.stats.activeProjects')} value={String(stats.activeProjects)} />
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
+        {statItems.map((item) => (
+          <div
+            key={item.label}
+            className={cn(
+              'glass min-w-[42%] shrink-0 rounded-[22px] p-3.5 sm:min-w-0',
+            )}
+          >
+            <p className="line-clamp-2 text-[11px] font-medium leading-tight text-muted sm:text-xs">{item.label}</p>
+            <p className="mt-1.5 text-base font-extrabold leading-tight text-text sm:text-lg">{item.value}</p>
+          </div>
+        ))}
       </div>
 
-      {showFilters ? <FilterPills options={filterOptions} value={filter} onChange={setFilter} /> : null}
+      <FilterPills options={filterOptions} value={filter} onChange={setFilter} />
 
       {filtered.length === 0 ? (
-        <EmptyState title={t('common.empty')} description={t('home.subtitle')} />
+        <EmptyState
+          title={t('common.empty')}
+          description="Создайте первый расчёт — это займёт пару минут"
+          action={
+            <Button onClick={() => navigate('/projects/new')}>
+              <Plus size={18} />
+              {t('home.newCalc')}
+            </Button>
+          }
+        />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
           {filtered.map((p) => (
             <ProjectCard key={p.id} project={p} />
           ))}

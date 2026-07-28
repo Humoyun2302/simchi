@@ -46,7 +46,7 @@ export function ToastViewport({
   onDismiss: (id: string) => void
 }) {
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-4 z-[90] flex flex-col items-center gap-2 px-4">
+    <div className="pointer-events-none fixed inset-x-0 top-[max(0.75rem,env(safe-area-inset-top))] z-[90] flex flex-col items-center gap-2 px-4">
       {items.map((t) => (
         <button
           key={t.id}

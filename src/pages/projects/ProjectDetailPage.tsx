@@ -47,39 +47,55 @@ export function ProjectDetailPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <button type="button" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-muted" onClick={() => navigate(-1)}>
+    <div className="space-y-4 sm:space-y-5">
+      <button
+        type="button"
+        className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-muted"
+        onClick={() => navigate(-1)}
+      >
         <ArrowLeft size={16} />
         {t('common.back')}
       </button>
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-extrabold">{project.title}</h1>
-          <p className="mt-1 text-muted">{project.clients?.full_name}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-[1.6rem] font-extrabold leading-tight sm:text-3xl">{project.title}</h1>
+          <p className="mt-1 text-sm text-muted sm:text-base">{project.clients?.full_name}</p>
         </div>
-        <Badge tone="primary">{t(`project.statuses.${project.status}`)}</Badge>
+        <Badge tone="primary" className="shrink-0">
+          {t(`project.statuses.${project.status}`)}
+        </Badge>
       </div>
 
-      <Card className="grid gap-3 sm:grid-cols-2">
-        <Info label={t('project.address')} value={`${project.address ?? ''}, ${project.city ?? ''}`} />
-        <Info label={t('project.objectType')} value={t(`project.objectTypes.${project.object_type}`)} />
-        <Info label={t('project.rooms')} value={String(project.rooms_count)} />
-        <Info label={t('project.updated')} value={formatDate(project.updated_at)} />
-        <Info label={t('project.materialsCost')} value={formatMoney(project.materials_total)} />
-        <Info label={t('project.worksCost')} value={formatMoney(project.works_total)} />
-        <Info label={t('project.total')} value={formatMoney(project.grand_total)} />
+      <Card className="space-y-3 !p-4 sm:!p-5">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-xs text-muted">{t('project.total')}</p>
+            <p className="text-2xl font-extrabold text-primary">{formatMoney(project.grand_total)}</p>
+          </div>
+          <p className="text-right text-xs text-muted">
+            {project.rooms_count} {t('project.rooms').toLowerCase()}
+            <br />
+            {formatDate(project.updated_at)}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 border-t border-white/70 pt-3 text-sm">
+          <Info label={t('project.materialsCost')} value={formatMoney(project.materials_total)} />
+          <Info label={t('project.worksCost')} value={formatMoney(project.works_total)} />
+          <Info label={t('project.objectType')} value={t(`project.objectTypes.${project.object_type}`)} />
+          <Info label={t('project.address')} value={`${project.address ?? ''}`} />
+        </div>
       </Card>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
         {links.map((item) => (
           <Link
             key={item.to}
             to={item.to}
-            className="glass flex min-h-14 items-center gap-3 rounded-[24px] px-4 font-semibold text-text"
+            className="glass flex min-h-[4.25rem] flex-col items-start justify-center gap-1.5 rounded-[22px] px-3.5 py-3 font-semibold text-text active:scale-[0.98] sm:min-h-14 sm:flex-row sm:items-center sm:gap-3 sm:rounded-[24px] sm:px-4"
           >
             <item.icon size={18} className="text-primary" />
-            {item.label}
+            <span className="text-sm leading-snug">{item.label}</span>
           </Link>
         ))}
       </div>
