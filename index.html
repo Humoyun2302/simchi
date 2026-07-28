@@ -16,7 +16,25 @@
     <title>SIMCHI</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div
+        id="simchi-boot"
+        style="
+          min-height: 100dvh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: Manrope, system-ui, sans-serif;
+          color: #1f2a44;
+          background: linear-gradient(180deg, #f5f8ff, #eaf2ff);
+        "
+      >
+        <div style="text-align: center">
+          <div style="font-weight: 800; font-size: 28px; letter-spacing: 0.04em; color: #3f7ff1">SIMCHI</div>
+          <div style="margin-top: 10px; font-size: 14px; opacity: 0.7">Загрузка…</div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

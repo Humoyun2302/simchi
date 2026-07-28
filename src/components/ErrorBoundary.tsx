@@ -11,8 +11,11 @@ interface State {
   error: Error | null
 }
 
-/** Catches render crashes so navigation failures don't leave a blank white screen. */
-export class ErrorBoundary extends Component<Props, State> {
+export function ErrorBoundary({ children, fallbackTitle }: Props) {
+  return <ErrorBoundaryInner fallbackTitle={fallbackTitle}>{children}</ErrorBoundaryInner>
+}
+
+class ErrorBoundaryInner extends Component<Props, State> {
   state: State = { error: null }
 
   static getDerivedStateFromError(error: Error): State {
@@ -23,21 +26,39 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('UI crash', error, info.componentStack)
   }
 
+  private reset = () => {
+    this.setState({ error: null })
+  }
+
+  private goHome = () => {
+    try {
+      // Clear potentially corrupt persisted demo state that can crash selectors
+      localStorage.removeItem('simchi-app-data')
+    } catch {
+      // ignore
+    }
+    window.location.href = '/'
+  }
+
   render() {
     if (this.state.error) {
       return (
-        <Card className="space-y-4">
-          <h2 className="text-xl font-extrabold">{this.props.fallbackTitle ?? 'Что-то пошло не так'}</h2>
-          <p className="text-sm text-muted">Страница не загрузилась. Можно вернуться назад и попробовать снова.</p>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={() => this.setState({ error: null })}>
-              Повторить
-            </Button>
-            <Button variant="outline" onClick={() => { window.location.href = '/' }}>
-              На главную
-            </Button>
-          </div>
-        </Card>
+        <div className="mx-auto flex min-h-dvh max-w-lg items-center px-4 py-8">
+          <Card className="w-full space-y-4">
+            <h2 className="text-xl font-extrabold">{this.props.fallbackTitle ?? 'Что-то пошло не так'}</h2>
+            <p className="text-sm text-muted">
+              Страница не загрузилась. Можно повторить или сбросить локальные данные и открыть главную.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={this.reset}>
+                Повторить
+              </Button>
+              <Button variant="outline" onClick={this.goHome}>
+                На главную
+              </Button>
+            </div>
+          </Card>
+        </div>
       )
     }
     return this.props.children

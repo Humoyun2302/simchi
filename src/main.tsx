@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './i18n'
 import './index.css'
 import App from './App'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { registerSW } from 'virtual:pwa-register'
 
 const queryClient = new QueryClient({
@@ -17,14 +18,25 @@ const queryClient = new QueryClient({
   },
 })
 
-registerSW({ immediate: true })
+registerSW({
+  immediate: true,
+  onRegisteredSW(_swUrl, registration) {
+    // Pull updates so users are not stuck on a crashed cached build
+    void registration?.update()
+    if (registration) {
+      setInterval(() => void registration.update(), 60 * 60 * 1000)
+    }
+  },
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ErrorBoundary fallbackTitle="SIMCHI не загрузился">
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

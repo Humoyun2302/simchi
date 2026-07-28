@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,7 +15,11 @@ export function ClientDetailPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const client = useAppDataStore((s) => s.clients.find((c) => c.id === id))
-  const projects = useAppDataStore((s) => s.projects.filter((p) => p.client_id === id))
+  const allProjects = useAppDataStore((s) => s.projects)
+  const projects = useMemo(
+    () => allProjects.filter((p) => p.client_id === id),
+    [allProjects, id],
+  )
   const upsertClient = useAppDataStore((s) => s.upsertClient)
   const deleteClient = useAppDataStore((s) => s.deleteClient)
   const push = useToastStore((s) => s.push)

@@ -22,7 +22,11 @@ export function SupplierCabinetPage() {
   const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('orders')
   const supplier = DEMO_SUPPLIERS[0]
-  const orders = useAppDataStore((s) => s.orders.filter((o) => o.supplier_id === supplier.id))
+  const allOrders = useAppDataStore((s) => s.orders)
+  const orders = useMemo(
+    () => allOrders.filter((o) => o.supplier_id === supplier.id),
+    [allOrders, supplier.id],
+  )
   const updateOrderStatus = useAppDataStore((s) => s.updateOrderStatus)
   const push = useToastStore((s) => s.push)
   const [products, setProducts] = useState(() => {
