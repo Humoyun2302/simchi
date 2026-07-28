@@ -1,0 +1,4 @@
+sku,name,brand,category,unit,price,stock,pack_size,min_qty,branch
+VVG-3x25,Кабель ВВГнг 3×2.5,CableTech,cables,м,18500,1200,100,10,Центральный
+SKT-01,Розетка одинарная,Schneider,sockets,шт,45000,340,1,1,Центральный
+SW-01,Выключатель 1-кл,Legrand,switches,шт,38000,220,1,1,Центральный
