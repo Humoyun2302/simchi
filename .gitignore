@@ -35,3 +35,6 @@ dev-dist
 # Misc
 *.tsbuildinfo
 coverage
+
+# Local Netlify folder
+.netlify
