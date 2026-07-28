@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
-import { UserPlus } from 'lucide-react'
+import { ArrowLeft, UserPlus } from 'lucide-react'
 import { Logo } from '@/components/ui/logo'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -26,8 +26,8 @@ type FormValues = z.infer<typeof schema>
 export function RegisterPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const profile = useAuthStore((s) => s.profile)
   const signUp = useAuthStore((s) => s.signUp)
+  const enterDemo = useAuthStore((s) => s.enterDemo)
   const loading = useAuthStore((s) => s.loading)
   const push = useToastStore((s) => s.push)
   const [error, setError] = useState('')
@@ -43,8 +43,6 @@ export function RegisterPage() {
       company_name: '',
     },
   })
-
-  if (profile) return <Navigate to="/" replace />
 
   const onSubmit = form.handleSubmit(async (values) => {
     setError('')
@@ -63,6 +61,7 @@ export function RegisterPage() {
       <Card>
         <h1 className="text-2xl font-extrabold">{t('auth.registerTitle')}</h1>
         <p className="mt-1 text-sm text-muted">{t('auth.electricianOnly')}</p>
+        <p className="mt-2 text-sm text-muted">Регистрация по желанию — приложение доступно и без аккаунта.</p>
         <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit}>
           <Input label={t('auth.fullName')} error={form.formState.errors.full_name?.message} {...form.register('full_name')} />
           <Input label={t('auth.email')} type="email" error={form.formState.errors.email?.message} {...form.register('email')} />
@@ -82,6 +81,18 @@ export function RegisterPage() {
             {t('auth.login')}
           </Link>
         </p>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-5 w-full"
+          onClick={() => {
+            enterDemo()
+            navigate('/')
+          }}
+        >
+          <ArrowLeft size={18} />
+          Продолжить без регистрации
+        </Button>
       </Card>
     </div>
   )

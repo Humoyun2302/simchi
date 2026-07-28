@@ -1,12 +1,12 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth-store'
 import { Spinner } from '@/components/ui/card'
 import type { UserRole } from '@/types/database'
 
+/** Soft gate: app works as guest/demo. Role checks only for special cabinets. */
 export function ProtectedRoute({ roles }: { roles?: UserRole[] }) {
   const profile = useAuthStore((s) => s.profile)
   const initialized = useAuthStore((s) => s.initialized)
-  const location = useLocation()
 
   if (!initialized) {
     return (
@@ -16,11 +16,12 @@ export function ProtectedRoute({ roles }: { roles?: UserRole[] }) {
     )
   }
 
-  if (!profile) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  // Always allow app shell routes — guest uses demo profile
+  if (!roles) {
+    return <Outlet />
   }
 
-  if (roles && !roles.includes(profile.role)) {
+  if (!profile || !roles.includes(profile.role)) {
     return <Navigate to="/" replace />
   }
 

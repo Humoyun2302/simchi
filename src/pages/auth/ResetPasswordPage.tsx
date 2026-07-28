@@ -55,6 +55,11 @@ export function ResetPasswordPage() {
         <Link to="/login" className="mt-4 inline-block text-sm font-semibold text-primary">
           {t('auth.login')}
         </Link>
+        <div className="mt-3">
+          <Link to="/" className="text-sm font-semibold text-muted">
+            Продолжить без входа
+          </Link>
+        </div>
       </Card>
     </div>
   )

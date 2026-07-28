@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Filter, Plus, Settings } from 'lucide-react'
+import { Filter, LogIn, Plus, Settings } from 'lucide-react'
 import { Logo, FilterPills, SearchBar, StatCard } from '@/components/ui/logo'
 import { Button } from '@/components/ui/button'
 import { ProjectCard } from '@/components/projects/ProjectCard'
@@ -43,6 +43,15 @@ export function HomePage() {
       <div className="flex items-center justify-between gap-3">
         <Logo />
         <div className="flex gap-2">
+          {demoMode ? (
+            <Link
+              to="/login"
+              className="inline-flex h-11 items-center gap-1.5 rounded-2xl bg-white/70 px-3 text-sm font-semibold text-primary hover:bg-white"
+            >
+              <LogIn size={16} />
+              {t('auth.login')}
+            </Link>
+          ) : null}
           <Button variant="ghost" size="icon" aria-label={t('common.filters')} onClick={() => setShowFilters((v) => !v)}>
             <Filter size={18} />
           </Button>

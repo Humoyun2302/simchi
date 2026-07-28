@@ -1,17 +1,16 @@
 import { useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
-import { LogIn } from 'lucide-react'
+import { ArrowLeft, LogIn } from 'lucide-react'
 import { Logo } from '@/components/ui/logo'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth-store'
 import { useToastStore } from '@/stores/toast-store'
-import { isSupabaseConfigured } from '@/lib/supabase'
 
 const schema = z.object({
   email: z.string().email(),
@@ -24,7 +23,7 @@ export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const profile = useAuthStore((s) => s.profile)
+  const demoMode = useAuthStore((s) => s.demoMode)
   const signIn = useAuthStore((s) => s.signIn)
   const enterDemo = useAuthStore((s) => s.enterDemo)
   const loading = useAuthStore((s) => s.loading)
@@ -36,17 +35,13 @@ export function LoginPage() {
     defaultValues: { email: '', password: '' },
   })
 
-  if (profile) {
-    const from = (location.state as { from?: string } | null)?.from || '/'
-    return <Navigate to={from} replace />
-  }
-
   const onSubmit = form.handleSubmit(async (values) => {
     setError('')
     try {
       await signIn(values.email, values.password)
       push(t('common.success'), 'success')
-      navigate('/')
+      const from = (location.state as { from?: string } | null)?.from || '/'
+      navigate(from)
     } catch (e) {
       setError(e instanceof Error ? e.message : t('common.error'))
     }
@@ -58,9 +53,22 @@ export function LoginPage() {
       <Card>
         <h1 className="text-2xl font-extrabold">{t('auth.loginTitle')}</h1>
         <p className="mt-1 text-sm text-muted">{t('auth.loginSubtitle')}</p>
+        <p className="mt-2 text-sm text-muted">Вход необязателен — можно продолжить без аккаунта.</p>
         <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit}>
-          <Input label={t('auth.email')} type="email" autoComplete="email" error={form.formState.errors.email?.message} {...form.register('email')} />
-          <Input label={t('auth.password')} type="password" autoComplete="current-password" error={form.formState.errors.password?.message} {...form.register('password')} />
+          <Input
+            label={t('auth.email')}
+            type="email"
+            autoComplete="email"
+            error={form.formState.errors.email?.message}
+            {...form.register('email')}
+          />
+          <Input
+            label={t('auth.password')}
+            type="password"
+            autoComplete="current-password"
+            error={form.formState.errors.password?.message}
+            {...form.register('password')}
+          />
           {error ? <p className="text-sm text-danger-text">{error}</p> : null}
           <Button type="submit" disabled={loading}>
             <LogIn size={18} />
@@ -68,7 +76,7 @@ export function LoginPage() {
           </Button>
         </form>
         <div className="mt-4 flex flex-col gap-2 text-sm">
-          <Link to="/reset-password" className="text-primary font-semibold">
+          <Link to="/reset-password" className="font-semibold text-primary">
             {t('auth.forgotPassword')}
           </Link>
           <p className="text-muted">
@@ -78,19 +86,21 @@ export function LoginPage() {
             </Link>
           </p>
         </div>
-        {!isSupabaseConfigured ? (
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-5 w-full"
-            onClick={() => {
-              enterDemo()
-              navigate('/')
-            }}
-          >
-            Демо-режим
-          </Button>
-        ) : null}
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-5 w-full"
+          onClick={() => {
+            enterDemo()
+            navigate('/')
+          }}
+        >
+          <ArrowLeft size={18} />
+          Продолжить без входа
+        </Button>
+        {!demoMode ? null : (
+          <p className="mt-3 text-center text-xs text-muted">Сейчас вы в гостевом режиме</p>
+        )}
       </Card>
     </div>
   )

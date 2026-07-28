@@ -1,11 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import { LogOut } from 'lucide-react'
+import { LogIn, LogOut, UserPlus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/ui/logo'
 import { Card, Badge } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth-store'
-import { isSupabaseConfigured } from '@/lib/supabase'
 
 export function ProfilePage() {
   const { t } = useTranslation()
@@ -20,7 +19,7 @@ export function ProfilePage() {
     <div className="space-y-5">
       <PageHeader title={t('profile.title')} subtitle={t('profile.subtitle')} />
       <Card className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <h2 className="text-2xl font-extrabold">{profile.full_name}</h2>
           <Badge tone="primary">{profile.role}</Badge>
         </div>
@@ -28,21 +27,34 @@ export function ProfilePage() {
         <p>{profile.phone}</p>
         <p>{profile.city}</p>
         {profile.company_name ? <p className="font-semibold">{profile.company_name}</p> : null}
-        {demoMode || !isSupabaseConfigured ? (
-          <Badge tone="warning">Demo mode</Badge>
-        ) : null}
+        {demoMode ? <Badge tone="warning">Гостевой режим</Badge> : <Badge tone="success">Аккаунт подключён</Badge>}
       </Card>
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={async () => {
-          await signOut()
-          navigate('/login')
-        }}
-      >
-        <LogOut size={18} />
-        {t('nav.logout')}
-      </Button>
+
+      {demoMode ? (
+        <div className="grid gap-3">
+          <Button className="w-full" onClick={() => navigate('/login')}>
+            <LogIn size={18} />
+            {t('auth.login')}
+          </Button>
+          <Button variant="secondary" className="w-full" onClick={() => navigate('/register')}>
+            <UserPlus size={18} />
+            {t('auth.register')}
+          </Button>
+          <p className="text-center text-sm text-muted">Вход и регистрация необязательны</p>
+        </div>
+      ) : (
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={async () => {
+            await signOut()
+            navigate('/profile')
+          }}
+        >
+          <LogOut size={18} />
+          {t('nav.logout')}
+        </Button>
+      )}
     </div>
   )
 }
