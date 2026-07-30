@@ -76,7 +76,7 @@ export function PublicEstimatePage() {
         variant="secondary"
         className="w-full"
         onClick={() =>
-          exportEstimatePdf({
+          void exportEstimatePdf({
             title: estimate.title,
             clientName: estimate.clientName,
             address: '',

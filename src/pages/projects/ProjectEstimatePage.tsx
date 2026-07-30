@@ -102,7 +102,7 @@ export function ProjectEstimatePage() {
         <p className="text-sm text-warning-text">{t('calc.disclaimer')}</p>
       </Card>
       <div className="grid gap-3 sm:grid-cols-3">
-        <Button variant="secondary" onClick={() => exportEstimatePdf(payload)}>
+        <Button variant="secondary" onClick={() => void exportEstimatePdf(payload)}>
           <FileDown size={16} />
           {t('estimate.downloadPdf')}
         </Button>
