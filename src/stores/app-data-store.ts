@@ -776,8 +776,8 @@ export const useAppDataStore = create<AppDataState>()(
     }),
     {
       name: 'simchi-app-data',
-      version: 2,
-      migrate: (persisted) => {
+      version: 3,
+      migrate: (persisted, fromVersion) => {
         const state = (persisted ?? {}) as Partial<{
           clients: typeof DEMO_CLIENTS
           projects: typeof DEMO_PROJECTS
@@ -789,6 +789,13 @@ export const useAppDataStore = create<AppDataState>()(
           wizard: WizardDraft
           publicEstimates: AppDataState['publicEstimates']
         }>
+        let wizard = state.wizard ?? emptyWizard()
+        // v2→v3: client step moved from first (0) to last (5)
+        if ((fromVersion ?? 0) < 3 && wizard) {
+          const oldToNew = [5, 0, 1, 2, 3, 4] as const
+          const oldStep = Math.min(Math.max(wizard.step ?? 0, 0), 5)
+          wizard = { ...wizard, step: oldToNew[oldStep] }
+        }
         return {
           clients: state.clients ?? DEMO_CLIENTS,
           projects: state.projects ?? DEMO_PROJECTS,
@@ -797,7 +804,7 @@ export const useAppDataStore = create<AppDataState>()(
           materials: { ...DEMO_MATERIALS, ...(state.materials ?? {}) },
           works: { ...DEMO_WORKS, ...(state.works ?? {}) },
           orders: state.orders ?? DEMO_ORDERS,
-          wizard: state.wizard ?? emptyWizard(),
+          wizard,
           publicEstimates: state.publicEstimates ?? {},
         }
       },

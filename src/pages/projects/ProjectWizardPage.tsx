@@ -25,6 +25,14 @@ import type { ObjectType, RoomType, WiringType, WorkKind, RoutingMethod } from '
 
 const STEPS = 6
 
+/** Wizard order: Object → Rooms → Points → Params → Result → Client (last) */
+const STEP_OBJECT = 0
+const STEP_ROOMS = 1
+const STEP_POINTS = 2
+const STEP_PARAMS = 3
+const STEP_RESULT = 4
+const STEP_CLIENT = 5
+
 const phoneError = 'Введите полный номер телефона'
 const floorsRequired = 'Укажите количество этажей'
 const floorsMin = 'Количество этажей должно быть не меньше 1'
@@ -51,12 +59,12 @@ export function ProjectWizardPage() {
 
   const step = wizard.step
   const titles = [
-    t('project.wizard.stepClient'),
     t('project.wizard.stepObject'),
     t('project.wizard.stepRooms'),
     t('project.wizard.stepPoints'),
     t('project.wizard.stepParams'),
     t('project.wizard.stepResult'),
+    t('project.wizard.stepClient'),
   ]
 
   const calc = useMemoCalc(wizard)
@@ -74,15 +82,7 @@ export function ProjectWizardPage() {
   const validateWizard = (w: WizardDraft, s: number): Record<string, string> => {
     const nextErrors: Record<string, string> = {}
 
-    if (s === 0 && w.clientMode === 'new') {
-      if (!w.client.full_name.trim()) nextErrors.full_name = t('common.required')
-      if (!isValidUzbekPhone(w.client.phone)) nextErrors.phone = phoneError
-    }
-    if (s === 0 && w.clientMode === 'existing' && !w.clientId) {
-      nextErrors.clientId = t('common.required')
-    }
-
-    if (s === 1) {
+    if (s === STEP_OBJECT) {
       if (!w.project.title.trim() && !w.project.address.trim()) {
         nextErrors.title = t('common.required')
       }
@@ -95,11 +95,11 @@ export function ProjectWizardPage() {
       }
     }
 
-    if (s === 2 && w.rooms.length === 0) {
+    if (s === STEP_ROOMS && w.rooms.length === 0) {
       nextErrors.rooms = t('common.required')
     }
 
-    if (s === 3) {
+    if (s === STEP_POINTS) {
       if (w.points.length === 0) nextErrors.points = t('common.required')
       w.points.forEach((p) => {
         if (p.install_height_m != null && (Number.isNaN(p.install_height_m) || p.install_height_m < 0)) {
@@ -111,6 +111,14 @@ export function ProjectWizardPage() {
       })
     }
 
+    if (s === STEP_CLIENT && w.clientMode === 'new') {
+      if (!w.client.full_name.trim()) nextErrors.full_name = t('common.required')
+      if (!isValidUzbekPhone(w.client.phone)) nextErrors.phone = phoneError
+    }
+    if (s === STEP_CLIENT && w.clientMode === 'existing' && !w.clientId) {
+      nextErrors.clientId = t('common.required')
+    }
+
     return nextErrors
   }
 
@@ -118,7 +126,6 @@ export function ProjectWizardPage() {
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur()
     }
-    // Allow IntegerInput/DecimalInput/phone onBlur commits to flush into the store
     window.setTimeout(fn, 0)
   }
 
@@ -130,10 +137,6 @@ export function ProjectWizardPage() {
       if (Object.keys(nextErrors).length > 0) {
         push('Заполните обязательные поля шага', 'error')
         return
-      }
-      if (step === 0 && w.clientMode === 'new') {
-        const e164 = normalizeUzbekPhone(w.client.phone)
-        if (e164) setWizard({ client: { ...w.client, phone: e164 } })
       }
       setWizard({ step: Math.min(STEPS - 1, step + 1) })
     })
@@ -153,22 +156,22 @@ export function ProjectWizardPage() {
     afterCommit(() => {
       void (async () => {
         const w = useAppDataStore.getState().wizard
-        const clientErrors = validateWizard(w, 0)
-        if (Object.keys(clientErrors).length > 0) {
-          setErrors(clientErrors)
-          setWizard({ step: 0 })
-          push('Укажите клиента', 'error')
-          return
-        }
-        const objectErrors = validateWizard(w, 1)
+        const objectErrors = validateWizard(w, STEP_OBJECT)
         if (Object.keys(objectErrors).length > 0) {
           setErrors(objectErrors)
-          setWizard({ step: 1 })
+          setWizard({ step: STEP_OBJECT })
           return
         }
         if (w.rooms.length === 0) {
           push('Добавьте хотя бы одно помещение', 'error')
-          setWizard({ step: 2 })
+          setWizard({ step: STEP_ROOMS })
+          return
+        }
+        const clientErrors = validateWizard(w, STEP_CLIENT)
+        if (Object.keys(clientErrors).length > 0) {
+          setErrors(clientErrors)
+          setWizard({ step: STEP_CLIENT })
+          push('Укажите клиента', 'error')
           return
         }
         setSaving(true)
@@ -216,7 +219,7 @@ export function ProjectWizardPage() {
           </div>
         </div>
 
-        {step === 0 && (
+        {step === STEP_CLIENT && (
           <Card className="space-y-4">
             <div className="flex gap-2">
               <Button variant={wizard.clientMode === 'existing' ? 'primary' : 'outline'} className="h-12 flex-1" onClick={() => setWizard({ clientMode: 'existing' })}>
@@ -276,7 +279,7 @@ export function ProjectWizardPage() {
           </Card>
         )}
 
-        {step === 1 && (
+        {step === STEP_OBJECT && (
           <Card className="space-y-4">
             <Input label={t('project.wizard.projectName')} value={wizard.project.title} error={errors.title} onChange={(e) => { clearError('title'); setWizard({ project: { ...wizard.project, title: e.target.value } }) }} />
             <Input label={t('project.address')} value={wizard.project.address} onChange={(e) => setWizard({ project: { ...wizard.project, address: e.target.value } })} />
@@ -308,7 +311,7 @@ export function ProjectWizardPage() {
           </Card>
         )}
 
-        {step === 2 && (
+        {step === STEP_ROOMS && (
           <div className="space-y-4">
             {wizard.rooms.map((room, idx) => (
               <Card key={room.id} className="space-y-3">
@@ -364,7 +367,7 @@ export function ProjectWizardPage() {
           </div>
         )}
 
-        {step === 3 && (
+        {step === STEP_POINTS && (
           <div className="space-y-4">
             {wizard.rooms.length === 0 ? (
               <Card><p className="text-muted">{t('common.empty')}</p></Card>
@@ -442,7 +445,7 @@ export function ProjectWizardPage() {
           </div>
         )}
 
-        {step === 4 && (
+        {step === STEP_PARAMS && (
           <Card className="space-y-4">
             <DecimalInput label={t('project.wizard.distanceToPanel')} value={wizard.params.distanceToPanel_m} onValueChange={(distanceToPanel_m) => setWizard({ params: { ...wizard.params, distanceToPanel_m } })} />
             <IntegerInput label={t('project.wizard.panelsCount')} value={wizard.params.panelsCount} onValueChange={(panelsCount) => setWizard({ params: { ...wizard.params, panelsCount } })} />
@@ -458,7 +461,7 @@ export function ProjectWizardPage() {
           </Card>
         )}
 
-        {step === 5 && (
+        {step === STEP_RESULT && (
           <div className="space-y-4">
             <Card className="space-y-2 bg-warning/40">
               <p className="text-sm font-medium text-warning-text">{t('calc.disclaimer')}</p>
