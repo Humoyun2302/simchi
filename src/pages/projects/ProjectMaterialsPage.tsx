@@ -4,12 +4,14 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeft, RefreshCw } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { IntegerInput } from '@/components/ui/numeric-input'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney } from '@/lib/utils'
-import { explainLine, type MaterialLine } from '@/features/calculation-engine'
+import { type MaterialLine } from '@/features/calculation-engine'
+import { formatMaterialExplanation } from '@/features/calculation-engine/explain-human'
+import { ExplanationContent } from '@/features/calculation-engine/ExplanationContent'
 import { calculateForProject } from '@/lib/project-recalc'
-import { ConfirmDialog } from '@/components/ui/dialog'
 import type { MaterialCategory, MaterialRequirement } from '@/types/database'
 import { EMPTY_LIST } from '@/lib/empty'
 
@@ -39,6 +41,7 @@ export function ProjectMaterialsPage() {
   const updateProject = useAppDataStore((s) => s.updateProject)
   const recalculateProject = useAppDataStore((s) => s.recalculateProject)
   const [traceId, setTraceId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const computed = useMemo(() => {
     if (!project) return null
@@ -107,8 +110,33 @@ export function ProjectMaterialsPage() {
     if (project) updateProject(id, { materials_total: total, grand_total: total + project.works_total })
   }
 
+  const explanation = formatMaterialExplanation(
+    traceLine ??
+      (() => {
+        const stored = lines.find((l) => l.id === traceId || l.calculation_source === traceId)
+        if (!stored?.calculation_trace) return null
+        return {
+          id: stored.id,
+          name: stored.name,
+          category: stored.category,
+          unit: stored.unit,
+          quantity: stored.manual_qty ?? stored.calculated_qty,
+          quantityBeforeRound: stored.calculated_qty,
+          unitPrice: stored.unit_price,
+          totalPrice: stored.total_price,
+          sparePercent: stored.spare_percent,
+          coefficient: 1,
+          formula: '',
+          ruleId: stored.calculation_source ?? stored.id,
+          trace: stored.calculation_trace as unknown as MaterialLine['trace'],
+        } satisfies MaterialLine
+      })(),
+  )
+
+  const materialsTotal = lines.reduce((s, l) => s + l.total_price, 0)
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 pb-8">
       <button type="button" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-muted" onClick={() => navigate(`/projects/${id}`)}>
         <ArrowLeft size={16} />
         {t('common.back')}
@@ -123,60 +151,72 @@ export function ProjectMaterialsPage() {
       <Card className="bg-warning/40">
         <p className="text-sm text-warning-text">{t('calc.disclaimer')}</p>
       </Card>
+
+      <Card className="space-y-1">
+        <p className="text-xs text-muted">{t('calc.materialsCost')}</p>
+        <p className="text-2xl font-extrabold text-primary">{formatMoney(materialsTotal)}</p>
+      </Card>
+
       {lines.length === 0 ? <Card><p className="text-muted">{t('common.empty')}</p></Card> : null}
-      {lines.map((line) => (
-        <Card key={line.id} className="space-y-2">
-          <div className="flex justify-between gap-3">
-            <div>
-              <p className="font-bold">{line.name}</p>
-              <p className="text-sm text-muted">
-                {line.manual_qty ?? line.calculated_qty} {line.unit}
-              </p>
-            </div>
-            <p className="font-extrabold text-primary">{formatMoney(line.total_price)}</p>
-          </div>
-          <Input
-            label={t('calc.manualOverride')}
-            type="number"
-            value={line.manual_qty ?? ''}
-            onChange={(e) => {
-              const val = e.target.value === '' ? null : Number(e.target.value)
-              persistLines(
-                lines.map((l) =>
-                  l.id === line.id
-                    ? {
-                        ...l,
-                        manual_qty: val,
-                        total_price: (val ?? l.calculated_qty) * l.unit_price,
-                      }
-                    : l,
-                ),
-              )
-            }}
-          />
-          <Button variant="ghost" size="sm" onClick={() => setTraceId(line.calculation_source ?? line.id)}>
-            {t('common.whyAdded')}
-          </Button>
+
+      {lines.length > 0 ? (
+        <Card className="overflow-hidden !p-0">
+          <ul className="divide-y divide-black/5">
+            {lines.map((line) => (
+              <li key={line.id} className="px-4 py-3">
+                <p className="break-words font-bold leading-snug text-text">{line.name}</p>
+                <div className="mt-1 flex items-baseline justify-between gap-3">
+                  <p className="text-sm text-muted">
+                    {line.manual_qty ?? line.calculated_qty} {line.unit}
+                  </p>
+                  <p className="shrink-0 text-sm font-semibold text-muted">{formatMoney(line.total_price)}</p>
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <button
+                    type="button"
+                    className="text-xs font-semibold text-primary"
+                    onClick={() => setTraceId(line.calculation_source ?? line.id)}
+                  >
+                    {t('common.whyAdded')}
+                  </button>
+                  <button
+                    type="button"
+                    className="text-xs font-semibold text-muted"
+                    onClick={() => setEditingId(editingId === line.id ? null : line.id)}
+                  >
+                    {t('common.edit')}
+                  </button>
+                </div>
+                {editingId === line.id ? (
+                  <div className="mt-2">
+                    <IntegerInput
+                      label={t('calc.manualOverride')}
+                      value={line.manual_qty}
+                      onValueChange={(val) => {
+                        persistLines(
+                          lines.map((l) =>
+                            l.id === line.id
+                              ? {
+                                  ...l,
+                                  manual_qty: val,
+                                  total_price: (val ?? l.calculated_qty) * l.unit_price,
+                                }
+                              : l,
+                          ),
+                        )
+                      }}
+                    />
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
         </Card>
-      ))}
-      <ConfirmDialog
-        open={Boolean(traceId)}
-        title={t('common.whyAdded')}
-        description={(() => {
-          if (!traceLine) {
-            const stored = lines.find((l) => l.id === traceId || l.calculation_source === traceId)
-            const tr = stored?.calculation_trace as { formula?: string; beforeRound?: number; finalQty?: number } | null
-            if (!tr) return 'Нет данных расчёта для этой позиции'
-            return `${t('calc.formula')}: ${tr.formula ?? '—'}\n${t('calc.beforeRound')}: ${tr.beforeRound ?? '—'}\n${t('calc.finalQty')}: ${tr.finalQty ?? '—'}`
-          }
-          const tr = explainLine(traceLine)
-          return `${t('calc.formula')}: ${tr.formula}\n${t('calc.beforeRound')}: ${tr.beforeRound}\n${t('calc.finalQty')}: ${tr.finalQty}`
-        })()}
-        confirmLabel="OK"
-        cancelLabel={t('common.cancel')}
-        onConfirm={() => setTraceId(null)}
-        onCancel={() => setTraceId(null)}
-      />
+      ) : null}
+
+      <BottomSheet open={Boolean(traceId)} title={explanation.title} onClose={() => setTraceId(null)}>
+        <ExplanationContent explanation={explanation} />
+      </BottomSheet>
     </div>
   )
 }

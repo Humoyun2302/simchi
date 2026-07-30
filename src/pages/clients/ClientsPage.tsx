@@ -6,10 +6,12 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { UzbekPhoneInput } from '@/components/ui/uzbek-phone-input'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { useState } from 'react'
 import { useToastStore } from '@/stores/toast-store'
+import { formatUzbekPhone, isValidUzbekPhone, normalizeUzbekPhone } from '@/lib/phone'
 
 export function ClientsPage() {
   const { t } = useTranslation()
@@ -18,6 +20,7 @@ export function ClientsPage() {
   const profile = useAuthStore((s) => s.profile)
   const push = useToastStore((s) => s.push)
   const [open, setOpen] = useState(false)
+  const [phoneError, setPhoneError] = useState('')
   const [form, setForm] = useState({ full_name: '', phone: '', telegram: '', comment: '', city: 'Ташкент' })
 
   return (
@@ -35,7 +38,15 @@ export function ClientsPage() {
       {open ? (
         <Card className="space-y-3">
           <Input label={t('auth.fullName')} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-          <Input label={t('auth.phone')} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <UzbekPhoneInput
+            label={t('auth.phone')}
+            value={form.phone}
+            error={phoneError}
+            onValueChange={(phone) => {
+              setPhoneError('')
+              setForm({ ...form, phone })
+            }}
+          />
           <Input label="Telegram" value={form.telegram} onChange={(e) => setForm({ ...form, telegram: e.target.value })} />
           <Input label={t('auth.city')} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
           <Textarea label={t('project.wizard.comment')} value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} />
@@ -43,15 +54,20 @@ export function ClientsPage() {
             className="w-full"
             onClick={() => {
               if (!profile) return
-              if (!form.full_name.trim() || !form.phone.trim()) {
+              if (!form.full_name.trim()) {
                 push('Укажите имя и телефон', 'error')
                 return
               }
+              if (!isValidUzbekPhone(form.phone)) {
+                setPhoneError('Введите полный номер телефона')
+                return
+              }
+              const phone = normalizeUzbekPhone(form.phone)!
               upsertClient({
                 id: crypto.randomUUID(),
                 electrician_id: profile.id,
                 full_name: form.full_name.trim(),
-                phone: form.phone.trim(),
+                phone,
                 telegram: form.telegram || null,
                 comment: form.comment || null,
                 city: form.city,
@@ -72,7 +88,7 @@ export function ClientsPage() {
           {clients.map((c) => (
             <Link key={c.id} to={`/clients/${c.id}`} className="glass rounded-[28px] p-5 block">
               <p className="font-bold">{c.full_name}</p>
-              <p className="text-sm text-muted">{c.phone}</p>
+              <p className="text-sm text-muted">{formatUzbekPhone(c.phone)}</p>
               <p className="text-sm text-muted">{c.city}</p>
             </Link>
           ))}

@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
+import { IntegerInput } from '@/components/ui/numeric-input'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { DEVICE_TYPES } from '@/features/calculation-engine'
 import { resolveDeviceCode } from '@/lib/project-recalc'
@@ -22,7 +22,7 @@ export function ProjectPointsPage() {
   const deletePoint = useAppDataStore((s) => s.deletePoint)
   const [deviceCode, setDeviceCode] = useState('socket_single')
   const [roomId, setRoomId] = useState('')
-  const [qty, setQty] = useState(1)
+  const [qty, setQty] = useState<number | null>(1)
   const [separate, setSeparate] = useState(false)
 
   useEffect(() => {
@@ -84,11 +84,10 @@ export function ProjectPointsPage() {
               ))}
             </Select>
           </div>
-          <Input
+          <IntegerInput
             label={t('project.wizard.quantity')}
-            type="number"
             value={p.quantity}
-            onChange={(e) => updatePoint(id, p.id, { quantity: Number(e.target.value) || 1 })}
+            onValueChange={(quantity) => updatePoint(id, p.id, { quantity: quantity ?? 1 })}
           />
           <label className="flex min-h-11 items-center gap-2 text-sm font-medium">
             <input
@@ -111,14 +110,14 @@ export function ProjectPointsPage() {
             <option key={d.code} value={d.code}>{d.nameRu}</option>
           ))}
         </Select>
-        <Input label={t('project.wizard.quantity')} type="number" value={qty} onChange={(e) => setQty(Number(e.target.value) || 1)} />
+        <IntegerInput label={t('project.wizard.quantity')} value={qty} onValueChange={setQty} />
         <label className="flex min-h-11 items-center gap-2 text-sm font-medium">
           <input type="checkbox" checked={separate} onChange={(e) => setSeparate(e.target.checked)} />
           {t('project.wizard.separateLine')}
         </label>
         <Button
           className="w-full"
-          disabled={!roomId}
+          disabled={!roomId || qty == null || qty < 1}
           onClick={() => {
             addPoint(id, {
               id: crypto.randomUUID(),
@@ -127,7 +126,7 @@ export function ProjectPointsPage() {
               device_type_id: null,
               device_code: deviceCode,
               custom_name: DEVICE_TYPES.find((d) => d.code === deviceCode)?.nameRu ?? deviceCode,
-              quantity: qty,
+              quantity: qty ?? 1,
               install_height_m: 0.3,
               separate_line: separate,
               comment: null,

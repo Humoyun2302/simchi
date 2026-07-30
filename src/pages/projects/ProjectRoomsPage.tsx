@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import { DecimalInput } from '@/components/ui/numeric-input'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { useState } from 'react'
 import type { RoomType } from '@/types/database'
@@ -50,9 +51,9 @@ export function ProjectRoomsPage() {
             ))}
           </Select>
           <div className="grid grid-cols-3 gap-2">
-            <Input label={t('project.wizard.length')} type="number" value={room.length_m} onChange={(e) => updateRoom(id, room.id, { length_m: Number(e.target.value) || 0 })} />
-            <Input label={t('project.wizard.width')} type="number" value={room.width_m} onChange={(e) => updateRoom(id, room.id, { width_m: Number(e.target.value) || 0 })} />
-            <Input label={t('project.wizard.height')} type="number" value={room.height_m} onChange={(e) => updateRoom(id, room.id, { height_m: Number(e.target.value) || 0 })} />
+            <DecimalInput label={t('project.wizard.length')} value={room.length_m} onValueChange={(length_m) => updateRoom(id, room.id, { length_m: length_m ?? 0 })} />
+            <DecimalInput label={t('project.wizard.width')} value={room.width_m} onValueChange={(width_m) => updateRoom(id, room.id, { width_m: width_m ?? 0 })} />
+            <DecimalInput label={t('project.wizard.height')} value={room.height_m} onValueChange={(height_m) => updateRoom(id, room.id, { height_m: height_m ?? 0 })} />
           </div>
           <p className="text-sm text-muted">
             {room.area_m2} м² · {room.perimeter_m} м

@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useEffect } from 'react'
 import {
   Home,
   FolderKanban,
@@ -42,6 +43,19 @@ export function AppShell() {
   const toasts = useToastStore((s) => s.items)
   const dismiss = useToastStore((s) => s.dismiss)
   const hideNav = shouldHideMobileNav(location.pathname)
+
+  useEffect(() => {
+    const onFocusIn = (e: FocusEvent) => {
+      const el = e.target
+      if (!(el instanceof HTMLElement)) return
+      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) return
+      window.setTimeout(() => {
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }, 280)
+    }
+    document.addEventListener('focusin', onFocusIn)
+    return () => document.removeEventListener('focusin', onFocusIn)
+  }, [])
 
   return (
     <div className="min-h-dvh lg:flex">

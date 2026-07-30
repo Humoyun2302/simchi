@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { Logo } from '@/components/ui/logo'
 import { Card, Badge } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { IntegerInput } from '@/components/ui/numeric-input'
 import { DEMO_SUPPLIERS, useAppDataStore } from '@/stores/app-data-store'
 import { DEMO_PROFILE } from '@/stores/demo-data'
 import { DEFAULT_RULES } from '@/features/calculation-engine'
@@ -150,7 +150,7 @@ export function AdminPage() {
 
         {tab === 'ledger' && (
           <Card className="space-y-3">
-            <Input label="Комиссия SIMCHI %" type="number" value={commission} onChange={(e) => setCommission(Number(e.target.value) || 0)} />
+            <IntegerInput label="Комиссия SIMCHI %" value={commission} onValueChange={(v) => setCommission(v ?? 0)} />
             {orders.map((o) => (
               <div key={o.id} className="flex justify-between border-t border-white/70 pt-3 text-sm">
                 <span>{o.suppliers?.name}</span>

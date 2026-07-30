@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { IntegerInput } from '@/components/ui/numeric-input'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney } from '@/lib/utils'
 import { useState } from 'react'
@@ -27,7 +28,7 @@ export function ProjectWorksPage() {
   const setWorks = useAppDataStore((s) => s.setWorks)
   const updateProject = useAppDataStore((s) => s.updateProject)
   const [name, setName] = useState('')
-  const [price, setPrice] = useState(100_000)
+  const [price, setPrice] = useState<number | null>(100_000)
 
   const upsert = (items: ProjectWorkItem[]) => {
     setWorks(id, items)
@@ -81,20 +82,19 @@ export function ProjectWorksPage() {
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Input
+            <IntegerInput
               label={t('project.wizard.quantity')}
-              type="number"
               value={work.quantity}
-              onChange={(e) => {
-                const quantity = Number(e.target.value) || 0
+              onValueChange={(quantity) => {
+                const q = quantity ?? 0
                 upsert(
                   works.map((w) =>
                     w.id === work.id
                       ? {
                           ...w,
-                          quantity,
+                          quantity: q,
                           total_price: Math.round(
-                            quantity * w.unit_price * w.complexity_coefficient * (1 - w.discount_percent / 100),
+                            q * w.unit_price * w.complexity_coefficient * (1 - w.discount_percent / 100),
                           ),
                         }
                       : w,
@@ -102,20 +102,19 @@ export function ProjectWorksPage() {
                 )
               }}
             />
-            <Input
+            <IntegerInput
               label="Цена"
-              type="number"
               value={work.unit_price}
-              onChange={(e) => {
-                const unit_price = Number(e.target.value) || 0
+              onValueChange={(unit_price) => {
+                const priceVal = unit_price ?? 0
                 upsert(
                   works.map((w) =>
                     w.id === work.id
                       ? {
                           ...w,
-                          unit_price,
+                          unit_price: priceVal,
                           total_price: Math.round(
-                            w.quantity * unit_price * w.complexity_coefficient * (1 - w.discount_percent / 100),
+                            w.quantity * priceVal * w.complexity_coefficient * (1 - w.discount_percent / 100),
                           ),
                         }
                       : w,
@@ -129,11 +128,12 @@ export function ProjectWorksPage() {
       ))}
       <Card className="space-y-3">
         <Input label="Своя работа" value={name} onChange={(e) => setName(e.target.value)} />
-        <Input label="Цена" type="number" value={price} onChange={(e) => setPrice(Number(e.target.value) || 0)} />
+        <IntegerInput label="Цена" value={price} onValueChange={setPrice} />
         <Button
           className="w-full"
           onClick={() => {
             const complexity = project?.complexity_coefficient ?? 1
+            const unit = price ?? 0
             upsert([
               ...works,
               {
@@ -143,10 +143,10 @@ export function ProjectWorksPage() {
                 name: name || 'Другая работа',
                 work_type: 'custom',
                 quantity: 1,
-                unit_price: price,
+                unit_price: unit,
                 complexity_coefficient: complexity,
                 discount_percent: 0,
-                total_price: Math.round(price * complexity),
+                total_price: Math.round(unit * complexity),
                 comment: null,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),

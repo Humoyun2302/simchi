@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney } from '@/lib/utils'
+import { formatUzbekPhone, isValidUzbekPhone, normalizeUzbekPhone } from '@/lib/phone'
 import { useToastStore } from '@/stores/toast-store'
 import { ConfirmDialog } from '@/components/ui/dialog'
+import { UzbekPhoneInput } from '@/components/ui/uzbek-phone-input'
 
 export function ClientDetailPage() {
   const { id } = useParams()
@@ -41,7 +43,11 @@ export function ClientDetailPage() {
         {editing ? (
           <>
             <Input label={t('auth.fullName')} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-            <Input label={t('auth.phone')} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <UzbekPhoneInput
+              label={t('auth.phone')}
+              value={form.phone}
+              onValueChange={(phone) => setForm({ ...form, phone })}
+            />
             <Input label="Telegram" value={form.telegram} onChange={(e) => setForm({ ...form, telegram: e.target.value })} />
             <Input label={t('auth.city')} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
             <Textarea label={t('project.wizard.comment')} value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} />
@@ -49,14 +55,18 @@ export function ClientDetailPage() {
               <Button variant="outline" onClick={() => setEditing(false)}>{t('common.cancel')}</Button>
               <Button
                 onClick={() => {
-                  if (!form.full_name.trim() || !form.phone.trim()) {
+                  if (!form.full_name.trim()) {
                     push('Укажите имя и телефон', 'error')
+                    return
+                  }
+                  if (!isValidUzbekPhone(form.phone)) {
+                    push('Введите полный номер телефона', 'error')
                     return
                   }
                   upsertClient({
                     ...client,
                     full_name: form.full_name.trim(),
-                    phone: form.phone.trim(),
+                    phone: normalizeUzbekPhone(form.phone)!,
                     telegram: form.telegram || null,
                     comment: form.comment || null,
                     city: form.city || null,
@@ -72,7 +82,7 @@ export function ClientDetailPage() {
         ) : (
           <>
             <h1 className="text-3xl font-extrabold">{client.full_name}</h1>
-            <p className="text-muted">{client.phone}</p>
+            <p className="text-muted">{formatUzbekPhone(client.phone)}</p>
             {client.telegram ? <p className="text-muted">{client.telegram}</p> : null}
             {client.city ? <p className="text-muted">{client.city}</p> : null}
             {client.comment ? <p className="text-sm">{client.comment}</p> : null}

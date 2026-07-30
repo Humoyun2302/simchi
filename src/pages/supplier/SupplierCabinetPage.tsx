@@ -6,6 +6,8 @@ import { Card, Badge } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { IntegerInput } from '@/components/ui/numeric-input'
+import { UzbekPhoneInput } from '@/components/ui/uzbek-phone-input'
 import { DEMO_SUPPLIERS, useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney } from '@/lib/utils'
 import { useToastStore } from '@/stores/toast-store'
@@ -114,7 +116,7 @@ export function SupplierCabinetPage() {
         {tab === 'company' && (
           <Card className="space-y-3">
             <Input label="Название" value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} />
-            <Input label="Телефон" value={company.phone} onChange={(e) => setCompany({ ...company, phone: e.target.value })} />
+            <UzbekPhoneInput label="Телефон" value={company.phone} onValueChange={(phone) => setCompany({ ...company, phone })} />
             <Textarea label="Описание" value={company.description} onChange={(e) => setCompany({ ...company, description: e.target.value })} />
             <Button
               onClick={() => {
@@ -193,20 +195,18 @@ export function SupplierCabinetPage() {
             {products.map((p) => (
               <Card key={p.id} className="grid gap-3 sm:grid-cols-3">
                 <p className="font-bold sm:col-span-3">{p.name}</p>
-                <Input
+                <IntegerInput
                   label="Цена"
-                  type="number"
                   value={p.price}
-                  onChange={(e) =>
-                    persistProducts(products.map((x) => (x.id === p.id ? { ...x, price: Number(e.target.value) || 0 } : x)))
+                  onValueChange={(price) =>
+                    persistProducts(products.map((x) => (x.id === p.id ? { ...x, price: price ?? 0 } : x)))
                   }
                 />
-                <Input
+                <IntegerInput
                   label="Остаток"
-                  type="number"
                   value={p.stock}
-                  onChange={(e) =>
-                    persistProducts(products.map((x) => (x.id === p.id ? { ...x, stock: Number(e.target.value) || 0 } : x)))
+                  onValueChange={(stock) =>
+                    persistProducts(products.map((x) => (x.id === p.id ? { ...x, stock: stock ?? 0 } : x)))
                   }
                 />
                 <p className="self-end font-extrabold text-primary">{formatMoney(p.price)}</p>

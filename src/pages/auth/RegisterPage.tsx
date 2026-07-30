@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
@@ -9,14 +9,16 @@ import { Logo } from '@/components/ui/logo'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { UzbekPhoneInput } from '@/components/ui/uzbek-phone-input'
 import { useAuthStore } from '@/stores/auth-store'
 import { useToastStore } from '@/stores/toast-store'
+import { isValidUzbekPhone, normalizeUzbekPhone } from '@/lib/phone'
 
 const schema = z.object({
   full_name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6),
-  phone: z.string().min(9),
+  phone: z.string().refine(isValidUzbekPhone, 'Введите полный номер телефона'),
   city: z.string().min(2),
   company_name: z.string().optional(),
 })
@@ -34,6 +36,7 @@ export function RegisterPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
+    mode: 'onBlur',
     defaultValues: {
       full_name: '',
       email: '',
@@ -47,7 +50,8 @@ export function RegisterPage() {
   const onSubmit = form.handleSubmit(async (values) => {
     setError('')
     try {
-      await signUp(values)
+      const phone = normalizeUzbekPhone(values.phone) ?? values.phone
+      await signUp({ ...values, phone })
       push(t('common.success'), 'success')
       navigate('/')
     } catch (e) {
@@ -66,7 +70,19 @@ export function RegisterPage() {
           <Input label={t('auth.fullName')} error={form.formState.errors.full_name?.message} {...form.register('full_name')} />
           <Input label={t('auth.email')} type="email" error={form.formState.errors.email?.message} {...form.register('email')} />
           <Input label={t('auth.password')} type="password" error={form.formState.errors.password?.message} {...form.register('password')} />
-          <Input label={t('auth.phone')} error={form.formState.errors.phone?.message} {...form.register('phone')} />
+          <Controller
+            name="phone"
+            control={form.control}
+            render={({ field }) => (
+              <UzbekPhoneInput
+                label={t('auth.phone')}
+                value={field.value}
+                error={form.formState.errors.phone?.message}
+                onValueChange={field.onChange}
+                onBlur={field.onBlur}
+              />
+            )}
+          />
           <Input label={t('auth.city')} error={form.formState.errors.city?.message} {...form.register('city')} />
           <Input label={t('auth.company')} {...form.register('company_name')} />
           {error ? <p className="text-sm text-danger-text">{error}</p> : null}

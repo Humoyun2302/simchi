@@ -26,6 +26,7 @@ import {
 } from '@/stores/demo-data'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { calcArea, calcPerimeter } from '@/lib/utils'
+import { normalizeUzbekPhone } from '@/lib/phone'
 import {
   calculateProjectMaterials,
   DEVICE_TYPES,
@@ -39,6 +40,16 @@ import {
   worksFromCalc,
 } from '@/lib/project-recalc'
 
+export interface WizardParams {
+  distanceToPanel_m: number | null
+  panelsCount: number | null
+  panelFloor: number | null
+  routingMethod: CalcParams['routingMethod']
+  sparePercent: number | null
+  complexityCoefficient: number | null
+  worksBasePrice: number | null
+}
+
 export interface WizardDraft {
   step: number
   clientMode: 'existing' | 'new'
@@ -50,7 +61,7 @@ export interface WizardDraft {
     city: string
     object_type: ObjectType
     work_kind: WorkKind
-    floors_count: number
+    floors_count: number | null
     wiring_type: WiringType
     note: string
   }
@@ -58,9 +69,9 @@ export interface WizardDraft {
     id: string
     name: string
     room_type: Room['room_type']
-    length_m: number
-    width_m: number
-    height_m: number
+    length_m: number | null
+    width_m: number | null
+    height_m: number | null
     wall_material: string
     ceiling_material: string
     comment: string
@@ -69,13 +80,26 @@ export interface WizardDraft {
     id: string
     roomId: string
     deviceCode: string
-    quantity: number
-    install_height_m: number
+    quantity: number | null
+    install_height_m: number | null
     separate_line: boolean
     comment: string
     custom_power_w: number | null
   }>
-  params: CalcParams
+  params: WizardParams
+}
+
+/** Coerce draft params to calculation engine params (null → safe defaults). */
+export function toCalcParams(params: WizardParams): CalcParams {
+  return {
+    distanceToPanel_m: params.distanceToPanel_m ?? 0,
+    panelsCount: params.panelsCount ?? 1,
+    panelFloor: params.panelFloor ?? 1,
+    routingMethod: params.routingMethod,
+    sparePercent: params.sparePercent ?? 0,
+    complexityCoefficient: params.complexityCoefficient ?? 1,
+    worksBasePrice: params.worksBasePrice ?? 0,
+  }
 }
 
 const emptyWizard = (): WizardDraft => ({
@@ -323,11 +347,12 @@ export const useAppDataStore = create<AppDataState>()(
 
         if (w.clientMode === 'new' || !clientId) {
           clientId = crypto.randomUUID()
+          const phone = normalizeUzbekPhone(w.client.phone) ?? w.client.phone.replace(/\s/g, '')
           const client: Client = {
             id: clientId,
             electrician_id: electricianId,
             full_name: w.client.full_name,
-            phone: w.client.phone,
+            phone,
             telegram: w.client.telegram || null,
             comment: w.client.comment || null,
             city: w.project.city,
@@ -341,30 +366,36 @@ export const useAppDataStore = create<AppDataState>()(
           }
         }
 
-        const roomInputs = w.rooms.map((r) => ({
-          id: r.id,
-          name: r.name,
-          length_m: r.length_m,
-          width_m: r.width_m,
-          height_m: r.height_m,
-          area_m2: calcArea(r.length_m, r.width_m),
-          perimeter_m: calcPerimeter(r.length_m, r.width_m),
-        }))
+        const roomInputs = w.rooms.map((r) => {
+          const length_m = r.length_m ?? 0
+          const width_m = r.width_m ?? 0
+          const height_m = r.height_m ?? 0
+          return {
+            id: r.id,
+            name: r.name,
+            length_m,
+            width_m,
+            height_m,
+            area_m2: calcArea(length_m, width_m),
+            perimeter_m: calcPerimeter(length_m, width_m),
+          }
+        })
         const pointInputs = w.points.map((p) => ({
           id: p.id,
           roomId: p.roomId,
           deviceCode: p.deviceCode,
-          quantity: p.quantity,
+          quantity: p.quantity ?? 1,
           separateLine: p.separate_line,
           installHeight_m: p.install_height_m,
           customPower_w: p.custom_power_w,
         }))
-        const calc = calculateProjectMaterials(roomInputs, pointInputs, w.params)
+        const calcParams = toCalcParams(w.params)
+        const calc = calculateProjectMaterials(roomInputs, pointInputs, calcParams)
 
         const projectId = crypto.randomUUID()
         const client = get().clients.find((c) => c.id === clientId)
         const materials = materialsFromCalc(projectId, calc)
-        const works = worksFromCalc(projectId, calc, w.params.complexityCoefficient)
+        const works = worksFromCalc(projectId, calc, w.params.complexityCoefficient ?? 1)
         const worksTotal = works.reduce((s, item) => s + item.total_price, 0)
         const materialsTotal = materials.reduce((s, m) => s + m.total_price, 0)
 
@@ -377,7 +408,7 @@ export const useAppDataStore = create<AppDataState>()(
           city: w.project.city,
           object_type: w.project.object_type,
           work_kind: w.project.work_kind,
-          floors_count: w.project.floors_count,
+          floors_count: w.project.floors_count ?? 1,
           wiring_type: w.project.wiring_type,
           note: w.project.note || null,
           status: 'calculated',
@@ -385,36 +416,41 @@ export const useAppDataStore = create<AppDataState>()(
           works_total: worksTotal,
           grand_total: materialsTotal + worksTotal,
           rooms_count: w.rooms.length,
-          distance_to_panel_m: w.params.distanceToPanel_m,
-          panels_count: w.params.panelsCount,
-          panel_floor: w.params.panelFloor,
-          routing_method: w.params.routingMethod as RoutingMethod,
-          spare_percent: w.params.sparePercent,
-          complexity_coefficient: w.params.complexityCoefficient,
+          distance_to_panel_m: calcParams.distanceToPanel_m,
+          panels_count: calcParams.panelsCount,
+          panel_floor: calcParams.panelFloor,
+          routing_method: calcParams.routingMethod as RoutingMethod,
+          spare_percent: calcParams.sparePercent,
+          complexity_coefficient: calcParams.complexityCoefficient,
           created_at: ts,
           updated_at: ts,
           deleted_at: null,
           clients: client,
         }
 
-        const rooms: Room[] = w.rooms.map((r, i) => ({
-          id: r.id,
-          project_id: projectId,
-          name: r.name,
-          room_type: r.room_type,
-          length_m: r.length_m,
-          width_m: r.width_m,
-          height_m: r.height_m,
-          area_m2: calcArea(r.length_m, r.width_m),
-          perimeter_m: calcPerimeter(r.length_m, r.width_m),
-          wall_material: r.wall_material || null,
-          ceiling_material: r.ceiling_material || null,
-          comment: r.comment || null,
-          sort_order: i,
-          created_at: ts,
-          updated_at: ts,
-          deleted_at: null,
-        }))
+        const rooms: Room[] = w.rooms.map((r, i) => {
+          const length_m = r.length_m ?? 0
+          const width_m = r.width_m ?? 0
+          const height_m = r.height_m ?? 0
+          return {
+            id: r.id,
+            project_id: projectId,
+            name: r.name,
+            room_type: r.room_type,
+            length_m,
+            width_m,
+            height_m,
+            area_m2: calcArea(length_m, width_m),
+            perimeter_m: calcPerimeter(length_m, width_m),
+            wall_material: r.wall_material || null,
+            ceiling_material: r.ceiling_material || null,
+            comment: r.comment || null,
+            sort_order: i,
+            created_at: ts,
+            updated_at: ts,
+            deleted_at: null,
+          }
+        })
 
         const points: ElectricalPoint[] = w.points.map((p) => ({
           id: p.id,
@@ -423,7 +459,7 @@ export const useAppDataStore = create<AppDataState>()(
           device_type_id: null,
           device_code: p.deviceCode,
           custom_name: DEVICE_TYPES.find((d) => d.code === p.deviceCode)?.nameRu ?? p.deviceCode,
-          quantity: p.quantity,
+          quantity: p.quantity ?? 1,
           install_height_m: p.install_height_m,
           separate_line: p.separate_line,
           comment: p.comment || null,
