@@ -35,13 +35,13 @@ export function RegisterPage() {
   const schema = useMemo(
     () =>
       z.object({
-        full_name: z.string().min(2),
-        email: z.string().email(),
-        password: z.string().min(6),
+        full_name: z.string().min(2, t('validation.minName')),
+        email: z.string().email(t('validation.email')),
+        password: z.string().min(6, t('validation.minPassword')),
         phone: z.string().refine(isValidUzbekPhone, () => ({
           message: t('validation.phoneComplete'),
         })),
-        city: z.string().min(2),
+        city: z.string().min(2, t('validation.minCity')),
         company_name: z.string().optional(),
       }),
     [t],
@@ -55,7 +55,7 @@ export function RegisterPage() {
       email: '',
       password: '',
       phone: '',
-      city: 'Ташкент',
+      city: t('cities.tashkent'),
       company_name: '',
     },
   })

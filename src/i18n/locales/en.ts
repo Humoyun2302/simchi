@@ -521,6 +521,7 @@ export const en: TranslationSchema = {
     role: 'Role',
     city: 'City',
     status: 'Status',
+    statusActive: 'Active',
     demoRolesHint: 'In demo, roles change locally. In production — via Supabase profiles.',
     catalogManaged: 'Canonical products / supplier offers are managed in the database.',
     catalogMvpHint: 'In the MVP, the rules reference and demo catalog are available at /catalog.',

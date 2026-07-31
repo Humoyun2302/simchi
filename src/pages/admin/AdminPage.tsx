@@ -9,6 +9,7 @@ import { DEMO_SUPPLIERS, useAppDataStore } from '@/stores/app-data-store'
 import { DEMO_PROFILE } from '@/stores/demo-data'
 import { DEFAULT_RULES } from '@/features/calculation-engine'
 import { formatMoney } from '@/lib/utils'
+import { translateMaterialName, translateRole } from '@/lib/labels'
 
 type Tab = 'users' | 'suppliers' | 'catalog' | 'rules' | 'orders' | 'ledger' | 'stats' | 'audit'
 
@@ -84,13 +85,13 @@ export function AdminPage() {
                           )
                         }
                       >
-                        <option value="electrician">electrician</option>
-                        <option value="supplier">supplier</option>
-                        <option value="admin">admin</option>
+                        <option value="electrician">{translateRole(t, 'electrician')}</option>
+                        <option value="supplier">{translateRole(t, 'supplier')}</option>
+                        <option value="admin">{translateRole(t, 'admin')}</option>
                       </select>
                     </td>
                     <td>{u.city}</td>
-                    <td>active</td>
+                    <td>{t('admin.statusActive')}</td>
                   </tr>
                 ))}
               </tbody>
@@ -125,7 +126,7 @@ export function AdminPage() {
             {DEFAULT_RULES.map((r) => (
               <Card key={r.id} className="flex justify-between gap-3">
                 <div>
-                  <p className="font-bold">{r.name}</p>
+                  <p className="font-bold">{translateMaterialName(t, { name: r.name, ruleId: r.id })}</p>
                   <p className="text-xs text-muted">{r.formula}</p>
                 </div>
                 <Badge tone={r.isActive ? 'success' : 'neutral'}>v{r.version}</Badge>

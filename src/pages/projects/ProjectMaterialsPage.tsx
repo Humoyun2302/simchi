@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button'
 import { IntegerInput } from '@/components/ui/numeric-input'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { useAppDataStore } from '@/stores/app-data-store'
-import { formatMoney } from '@/lib/utils'
+import { formatMoney, formatUnit } from '@/lib/utils'
 import { type MaterialLine } from '@/features/calculation-engine'
 import { formatMaterialExplanation } from '@/features/calculation-engine/explain-human'
 import { ExplanationContent } from '@/features/calculation-engine/ExplanationContent'
 import { calculateForProject } from '@/lib/project-recalc'
+import { translateMaterialName, translateWarning } from '@/lib/labels'
 import type { MaterialCategory, MaterialRequirement } from '@/types/database'
 import { EMPTY_LIST } from '@/lib/empty'
 
@@ -27,6 +28,7 @@ type MaterialView = {
   calculation_source: string | null
   category: MaterialCategory
   spare_percent: number
+  warning?: string | null
 }
 
 export function ProjectMaterialsPage() {
@@ -62,6 +64,7 @@ export function ProjectMaterialsPage() {
           calculation_source: m.calculation_source,
           category: m.category,
           spare_percent: m.spare_percent,
+          warning: null,
         }))
       : computed?.materials.map((m) => ({
           id: m.id,
@@ -75,6 +78,7 @@ export function ProjectMaterialsPage() {
           calculation_source: m.ruleId,
           category: m.category as MaterialCategory,
           spare_percent: m.sparePercent,
+          warning: m.warning ?? null,
         })) ?? []
 
   const traceLine = useMemo((): MaterialLine | null => {
@@ -164,13 +168,21 @@ export function ProjectMaterialsPage() {
           <ul className="divide-y divide-black/5">
             {lines.map((line) => (
               <li key={line.id} className="px-4 py-3">
-                <p className="break-words font-bold leading-snug text-text">{line.name}</p>
+                <p className="break-words font-bold leading-snug text-text">
+                  {translateMaterialName(t, {
+                    name: line.name,
+                    calculationSource: line.calculation_source,
+                  })}
+                </p>
                 <div className="mt-1 flex items-baseline justify-between gap-3">
                   <p className="text-sm text-muted">
-                    {line.manual_qty ?? line.calculated_qty} {line.unit}
+                    {line.manual_qty ?? line.calculated_qty} {formatUnit(line.unit)}
                   </p>
                   <p className="shrink-0 text-sm font-semibold text-muted">{formatMoney(line.total_price)}</p>
                 </div>
+                {line.warning ? (
+                  <p className="mt-1 text-xs text-warning-text">{translateWarning(t, line.warning)}</p>
+                ) : null}
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
                   <button
                     type="button"

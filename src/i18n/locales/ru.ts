@@ -519,6 +519,7 @@ export const ru = {
     role: 'Роль',
     city: 'Город',
     status: 'Статус',
+    statusActive: 'Активен',
     demoRolesHint: 'В демо роли меняются локально. В production — через Supabase profiles.',
     catalogManaged: 'Canonical products / supplier offers управляются в БД.',
     catalogMvpHint: 'В MVP доступен справочник правил и демо-каталог на /catalog.',

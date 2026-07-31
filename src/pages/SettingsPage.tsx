@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
 import { LanguageSelector } from '@/components/ui/language-selector'
 import { useAuthStore } from '@/stores/auth-store'
+import { translateRole } from '@/lib/labels'
 
 export function SettingsPage() {
   const { t } = useTranslation()
@@ -22,9 +23,9 @@ export function SettingsPage() {
             value={profile?.role ?? 'electrician'}
             onChange={(e) => setRoleLocal(e.target.value as 'electrician' | 'supplier' | 'admin')}
             options={[
-              { value: 'electrician', label: 'electrician' },
-              { value: 'supplier', label: 'supplier' },
-              { value: 'admin', label: 'admin' },
+              { value: 'electrician', label: translateRole(t, 'electrician') },
+              { value: 'supplier', label: translateRole(t, 'supplier') },
+              { value: 'admin', label: translateRole(t, 'admin') },
             ]}
           />
         ) : null}

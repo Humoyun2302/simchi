@@ -21,7 +21,7 @@ export function ClientsPage() {
   const push = useToastStore((s) => s.push)
   const [open, setOpen] = useState(false)
   const [phoneError, setPhoneError] = useState('')
-  const [form, setForm] = useState({ full_name: '', phone: '', telegram: '', comment: '', city: 'Ташкент' })
+  const [form, setForm] = useState({ full_name: '', phone: '', telegram: '', comment: '', city: t('cities.tashkent') })
 
   return (
     <div className="space-y-5">
@@ -74,7 +74,7 @@ export function ClientsPage() {
               })
               push(t('common.success'), 'success')
               setOpen(false)
-              setForm({ full_name: '', phone: '', telegram: '', comment: '', city: 'Ташкент' })
+              setForm({ full_name: '', phone: '', telegram: '', comment: '', city: t('cities.tashkent') })
             }}
           >
             {t('common.save')}

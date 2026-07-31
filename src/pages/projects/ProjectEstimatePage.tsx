@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { copyToClipboard, formatDate, formatMoney } from '@/lib/utils'
+import { translateMaterialName, translateWorkName } from '@/lib/labels'
 import { exportEstimateCsv, exportEstimatePdf, exportEstimateXlsx } from '@/features/estimates/export'
 import { useToastStore } from '@/stores/toast-store'
 import { EMPTY_LIST } from '@/lib/empty'
@@ -39,14 +40,17 @@ export function ProjectEstimatePage() {
       validUntil: new Date(Date.now() + 14 * 86400000).toISOString(),
       rooms: rooms.map((r) => r.name),
       materials: materials.map((m) => ({
-        name: m.name,
+        name: translateMaterialName(t, {
+          name: m.name,
+          calculationSource: m.calculation_source,
+        }),
         qty: m.manual_qty ?? m.calculated_qty,
         unit: m.unit,
         price: m.unit_price,
         total: m.total_price,
       })),
       works: works.map((w) => ({
-        name: w.name,
+        name: translateWorkName(t, w.work_type, w.name),
         qty: w.quantity,
         price: w.unit_price,
         total: w.total_price,
@@ -83,7 +87,12 @@ export function ProjectEstimatePage() {
         ) : null}
         {materials.map((m) => (
           <div key={m.id} className="flex justify-between gap-3 text-sm">
-            <span>{m.name}</span>
+            <span>
+              {translateMaterialName(t, {
+                name: m.name,
+                calculationSource: m.calculation_source,
+              })}
+            </span>
             <span className="font-semibold">{formatMoney(m.total_price)}</span>
           </div>
         ))}
@@ -93,7 +102,7 @@ export function ProjectEstimatePage() {
         {works.length === 0 ? <p className="text-sm text-muted">—</p> : null}
         {works.map((w) => (
           <div key={w.id} className="flex justify-between gap-3 text-sm">
-            <span>{w.name}</span>
+            <span>{translateWorkName(t, w.work_type, w.name)}</span>
             <span className="font-semibold">{formatMoney(w.total_price)}</span>
           </div>
         ))}

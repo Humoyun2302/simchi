@@ -15,6 +15,8 @@ import {
 export function resolveDeviceCode(point: ElectricalPoint): string {
   if (point.device_code) return point.device_code
   if (point.device_types?.code) return point.device_types.code
+  const byCode = DEVICE_TYPES.find((d) => d.code === point.custom_name)
+  if (byCode) return byCode.code
   const byName = DEVICE_TYPES.find((d) => d.nameRu === point.custom_name)
   return byName?.code ?? 'socket_single'
 }

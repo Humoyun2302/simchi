@@ -5,6 +5,7 @@ import { Card, Badge } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney, formatDate } from '@/lib/utils'
+import { translateMaterialName } from '@/lib/labels'
 import { useToastStore } from '@/stores/toast-store'
 import type { OrderStatus } from '@/types/database'
 import { EMPTY_LIST } from '@/lib/empty'
@@ -54,7 +55,12 @@ export function OrderDetailPage() {
         {materials.length === 0 ? <p className="text-sm text-muted">—</p> : null}
         {materials.slice(0, 12).map((m) => (
           <div key={m.id} className="flex justify-between gap-3 text-sm">
-            <span>{m.name}</span>
+            <span>
+              {translateMaterialName(t, {
+                name: m.name,
+                calculationSource: m.calculation_source,
+              })}
+            </span>
             <span>{formatMoney(m.total_price)}</span>
           </div>
         ))}

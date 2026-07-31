@@ -10,6 +10,7 @@ import { IntegerInput } from '@/components/ui/numeric-input'
 import { UzbekPhoneInput } from '@/components/ui/uzbek-phone-input'
 import { DEMO_SUPPLIERS, useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney } from '@/lib/utils'
+import { translateMaterialName } from '@/lib/labels'
 import { useToastStore } from '@/stores/toast-store'
 import type { OrderStatus } from '@/types/database'
 
@@ -133,7 +134,9 @@ export function SupplierCabinetPage() {
           <div className="space-y-3">
             {branches.map((b) => (
               <Card key={b.id} className="space-y-1">
-                <p className="font-bold">{b.name}</p>
+                <p className="font-bold">
+                  {b.name === 'Центральный склад' ? t('supplier.centralWarehouse') : b.name}
+                </p>
                 <p className="text-sm text-muted">{b.address}</p>
               </Card>
             ))}
@@ -182,7 +185,7 @@ export function SupplierCabinetPage() {
                     const cols = line.split(',')
                     return {
                       id: `imp-${Date.now()}-${i}`,
-                      name: cols[1] || `Товар ${i + 1}`,
+                      name: cols[1] || t('supplier.productFallback', { n: i + 1 }),
                       price: Number(cols[5]) || 0,
                       stock: Number(cols[6]) || 0,
                     }
@@ -194,7 +197,9 @@ export function SupplierCabinetPage() {
             </Card>
             {products.map((p) => (
               <Card key={p.id} className="grid gap-3 sm:grid-cols-3">
-                <p className="font-bold sm:col-span-3">{p.name}</p>
+                <p className="font-bold sm:col-span-3">
+                  {translateMaterialName(t, { name: p.name })}
+                </p>
                 <IntegerInput
                   label={t('common.price')}
                   value={p.price}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -12,8 +12,7 @@ import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth-store'
 import { useToastStore } from '@/stores/toast-store'
 
-const schema = z.object({ email: z.string().email() })
-type FormValues = z.infer<typeof schema>
+type FormValues = { email: string }
 
 export function ResetPasswordPage() {
   const { t } = useTranslation()
@@ -21,8 +20,16 @@ export function ResetPasswordPage() {
   const push = useToastStore((s) => s.push)
   const [sent, setSent] = useState(false)
 
+  const schema = useMemo(
+    () =>
+      z.object({
+        email: z.string().email(t('validation.email')),
+      }),
+    [t],
+  )
+
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: (values, context, options) => zodResolver(schema)(values, context, options),
     defaultValues: { email: '' },
   })
 
@@ -46,7 +53,12 @@ export function ResetPasswordPage() {
           <p className="mt-4 text-sm text-muted">{t('auth.resetSent')}</p>
         ) : (
           <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit}>
-            <Input label={t('auth.email')} type="email" {...form.register('email')} />
+            <Input
+              label={t('auth.email')}
+              type="email"
+              error={form.formState.errors.email?.message}
+              {...form.register('email')}
+            />
             <Button type="submit">
               <Mail size={18} />
               {t('auth.sendReset')}

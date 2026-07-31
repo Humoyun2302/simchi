@@ -18,6 +18,7 @@ import { DEVICE_TYPES, calculateProjectMaterials } from '@/features/calculation-
 import { formatMaterialExplanation } from '@/features/calculation-engine/explain-human'
 import { ExplanationContent } from '@/features/calculation-engine/ExplanationContent'
 import { formatMoney, calcArea, calcPerimeter, formatUnit } from '@/lib/utils'
+import { translateDeviceName, translateMaterialName, translateWarning } from '@/lib/labels'
 import { isValidUzbekPhone, normalizeUzbekPhone } from '@/lib/phone'
 import type { ObjectType, RoomType, WiringType, WorkKind, RoutingMethod } from '@/types/database'
 
@@ -197,11 +198,7 @@ export function ProjectWizardPage() {
     wizard.project.floors_count >= 1 &&
     wizard.project.floors_count <= 100
 
-  const deviceLabel = (code: string) => {
-    const key = `project.devices.${code}` as const
-    const translated = t(key)
-    return translated === key ? DEVICE_TYPES.find((d) => d.code === code)?.nameRu ?? code : translated
-  }
+  const deviceLabel = (code: string) => translateDeviceName(t, code)
 
   return (
     <div className="flex min-h-0 flex-col">
@@ -492,13 +489,18 @@ export function ProjectWizardPage() {
               <ul className="divide-y divide-black/5">
                 {calc.materials.map((m) => (
                   <li key={m.id} className="px-4 py-3">
-                    <p className="break-words font-bold leading-snug text-text">{m.name}</p>
+                    <p className="break-words font-bold leading-snug text-text">
+                      {translateMaterialName(t, { name: m.name, ruleId: m.ruleId || m.id })}
+                    </p>
                     <div className="mt-1 flex items-baseline justify-between gap-3">
                       <p className="text-sm text-muted">
                         {m.quantity} {formatUnit(m.unit)}
                       </p>
                       <p className="shrink-0 text-sm font-semibold text-muted">{formatMoney(m.totalPrice)}</p>
                     </div>
+                    {m.warning ? (
+                      <p className="mt-1 text-xs text-warning-text">{translateWarning(t, m.warning)}</p>
+                    ) : null}
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
                       <button
                         type="button"

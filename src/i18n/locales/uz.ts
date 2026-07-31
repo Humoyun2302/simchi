@@ -521,6 +521,7 @@ export const uz: TranslationSchema = {
     role: 'Rol',
     city: 'Shahar',
     status: 'Holat',
+    statusActive: 'Faol',
     demoRolesHint: 'Demoda rollar mahalliy o‘zgaradi. Productionda — Supabase profiles orqali.',
     catalogManaged: 'Canonical products / supplier offers maʼlumotlar bazasida boshqariladi.',
     catalogMvpHint: 'MVPda qoidalar maʼlumotnomasi va demo-katalog /catalog da mavjud.',

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { IntegerInput } from '@/components/ui/numeric-input'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney } from '@/lib/utils'
+import { translateWorkName } from '@/lib/labels'
 import { useState } from 'react'
 import type { ProjectWorkItem } from '@/types/database'
 import { EMPTY_LIST } from '@/lib/empty'
@@ -72,7 +73,7 @@ export function ProjectWorksPage() {
       {works.map((work) => (
         <Card key={work.id} className="space-y-3">
           <div className="flex justify-between gap-2">
-            <p className="font-bold">{t(`project.workTypes.${work.work_type}`, { defaultValue: work.name })}</p>
+            <p className="font-bold">{translateWorkName(t, work.work_type, work.name)}</p>
             <Button
               variant="ghost"
               size="icon"

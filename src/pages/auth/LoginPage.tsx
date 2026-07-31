@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -13,12 +13,10 @@ import { LanguageSelector } from '@/components/ui/language-selector'
 import { useAuthStore } from '@/stores/auth-store'
 import { useToastStore } from '@/stores/toast-store'
 
-const schema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-})
-
-type FormValues = z.infer<typeof schema>
+type FormValues = {
+  email: string
+  password: string
+}
 
 export function LoginPage() {
   const { t } = useTranslation()
@@ -31,8 +29,17 @@ export function LoginPage() {
   const push = useToastStore((s) => s.push)
   const [error, setError] = useState('')
 
+  const schema = useMemo(
+    () =>
+      z.object({
+        email: z.string().email(t('validation.email')),
+        password: z.string().min(6, t('validation.minPassword')),
+      }),
+    [t],
+  )
+
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: (values, context, options) => zodResolver(schema)(values, context, options),
     defaultValues: { email: '', password: '' },
   })
 
