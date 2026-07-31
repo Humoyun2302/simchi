@@ -18,7 +18,7 @@ import { DEVICE_TYPES, calculateProjectMaterials } from '@/features/calculation-
 import { formatMaterialExplanation } from '@/features/calculation-engine/explain-human'
 import { ExplanationContent } from '@/features/calculation-engine/ExplanationContent'
 import { formatMoney, calcArea, calcPerimeter, formatUnit } from '@/lib/utils'
-import { translateDeviceName, translateMaterialName, translateWarning } from '@/lib/labels'
+import { translateDeviceName, translateMaterialName, translateWarning, translateRoomName } from '@/lib/labels'
 import { isValidUzbekPhone, normalizeUzbekPhone } from '@/lib/phone'
 import type { ObjectType, RoomType, WiringType, WorkKind, RoutingMethod } from '@/types/database'
 
@@ -319,7 +319,9 @@ export function ProjectWizardPage() {
             {wizard.rooms.map((room, idx) => (
               <Card key={room.id} className="space-y-3">
                 <div className="flex min-w-0 items-center justify-between gap-2">
-                  <h3 className="min-w-0 break-words font-bold">{room.name || `${t('project.rooms')} ${idx + 1}`}</h3>
+                  <h3 className="min-w-0 break-words font-bold">
+                    {translateRoomName(t, room.name, room.room_type) || `${t('project.rooms')} ${idx + 1}`}
+                  </h3>
                   <Button variant="ghost" size="icon" onClick={() => setWizard({ rooms: wizard.rooms.filter((r) => r.id !== room.id) })}>
                     <Trash2 size={16} />
                   </Button>
@@ -385,7 +387,7 @@ export function ProjectWizardPage() {
                   </div>
                   <Select label={t('project.rooms')} value={point.roomId} onChange={(e) => updatePoint(setWizard, wizard, point.id, { roomId: e.target.value })}>
                     {wizard.rooms.map((r) => (
-                      <option key={r.id} value={r.id}>{r.name}</option>
+                      <option key={r.id} value={r.id}>{translateRoomName(t, r.name, r.room_type)}</option>
                     ))}
                   </Select>
                   <Select label={t('project.wizard.addPoint')} value={point.deviceCode} onChange={(e) => updatePoint(setWizard, wizard, point.id, { deviceCode: e.target.value })}>

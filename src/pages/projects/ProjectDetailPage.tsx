@@ -15,6 +15,7 @@ import { Badge, Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { copyToClipboard, formatDate, formatMoney } from '@/lib/utils'
+import { translateProjectTitle } from '@/lib/labels'
 import { useToastStore } from '@/stores/toast-store'
 import { ConfirmDialog } from '@/components/ui/dialog'
 
@@ -65,7 +66,9 @@ export function ProjectDetailPage() {
 
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-[1.6rem] font-extrabold leading-tight sm:text-3xl">{project.title}</h1>
+          <h1 className="text-[1.6rem] font-extrabold leading-tight sm:text-3xl">
+            {translateProjectTitle(t, project.id, project.title)}
+          </h1>
           <p className="mt-1 text-sm text-muted sm:text-base">{project.clients?.full_name}</p>
         </div>
         <Badge tone="primary" className="shrink-0">

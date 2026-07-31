@@ -4,6 +4,7 @@ import { MapPin, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/card'
 import { formatDate, formatMoney, formatMoneyCompact } from '@/lib/utils'
 import { projectStatusI18nKey, normalizeProjectStatus } from '@/lib/status'
+import { translateProjectTitle } from '@/lib/labels'
 import type { Project, ProjectStatus } from '@/types/database'
 import { cn } from '@/lib/utils'
 
@@ -32,7 +33,9 @@ export function ProjectCard({ project }: { project: Project }) {
     >
       <div className="flex min-w-0 flex-wrap items-start gap-x-3 gap-y-2">
         <div className="min-w-0 flex-1 basis-[min(100%,12rem)]">
-          <h3 className="break-words text-[17px] font-bold leading-snug text-text">{project.title}</h3>
+          <h3 className="break-words text-[17px] font-bold leading-snug text-text">
+            {translateProjectTitle(t, project.id, project.title)}
+          </h3>
           <p className="mt-1 truncate text-sm text-muted">{project.clients?.full_name ?? '—'}</p>
         </div>
         <Badge

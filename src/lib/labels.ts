@@ -85,3 +85,57 @@ export function translateRole(t: TFunction, role: string): string {
   if (translated !== key) return translated
   return role
 }
+
+const ROOM_NAME_ALIASES: Record<string, string> = {
+  Кухня: 'kitchen',
+  Спальня: 'bedroom',
+  Гостиная: 'living_room',
+  Ванная: 'bathroom',
+  Коридор: 'hallway',
+  Кабинет: 'office',
+  'Техническое помещение': 'technical',
+  Другое: 'other',
+  Oshxona: 'kitchen',
+  Yotoqxona: 'bedroom',
+  Mehmonxona: 'living_room',
+  Hammom: 'bathroom',
+  Dahliz: 'hallway',
+  Kitchen: 'kitchen',
+  Bedroom: 'bedroom',
+  'Living room': 'living_room',
+  Bathroom: 'bathroom',
+  Hallway: 'hallway',
+}
+
+export function translateRoomName(
+  t: TFunction,
+  name: string,
+  roomType?: string | null,
+): string {
+  const fromName = ROOM_NAME_ALIASES[name]
+  const type = fromName || roomType
+  if (type) {
+    const key = `project.roomTypes.${type}`
+    const translated = t(key)
+    // Only replace when the stored name is a known default label for that type
+    if (translated !== key && (fromName || !name.trim())) return translated
+    if (fromName && translated !== key) return translated
+  }
+  return name
+}
+
+const DEMO_PROJECT_TITLE_KEYS: Record<string, string> = {
+  p1: 'demo.projects.p1',
+  p2: 'demo.projects.p2',
+  p3: 'demo.projects.p3',
+  p4: 'demo.projects.p4',
+}
+
+export function translateProjectTitle(t: TFunction, projectId: string, title: string): string {
+  const key = DEMO_PROJECT_TITLE_KEYS[projectId]
+  if (key) {
+    const translated = t(key)
+    if (translated !== key) return translated
+  }
+  return title
+}

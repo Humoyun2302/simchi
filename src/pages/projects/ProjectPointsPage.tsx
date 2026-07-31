@@ -9,7 +9,7 @@ import { IntegerInput } from '@/components/ui/numeric-input'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { DEVICE_TYPES } from '@/features/calculation-engine'
 import { resolveDeviceCode } from '@/lib/project-recalc'
-import { translateDeviceName } from '@/lib/labels'
+import { translateDeviceName, translateRoomName } from '@/lib/labels'
 import { EMPTY_LIST } from '@/lib/empty'
 
 export function ProjectPointsPage() {
@@ -66,7 +66,7 @@ export function ProjectPointsPage() {
               onChange={(e) => updatePoint(id, p.id, { room_id: e.target.value })}
             >
               {rooms.map((r) => (
-                <option key={r.id} value={r.id}>{r.name}</option>
+                <option key={r.id} value={r.id}>{translateRoomName(t, r.name, r.room_type)}</option>
               ))}
             </Select>
             <Select
@@ -103,7 +103,7 @@ export function ProjectPointsPage() {
       <Card className="space-y-3">
         <Select label={t('project.rooms')} value={roomId} onChange={(e) => setRoomId(e.target.value)}>
           {rooms.map((r) => (
-            <option key={r.id} value={r.id}>{r.name}</option>
+            <option key={r.id} value={r.id}>{translateRoomName(t, r.name, r.room_type)}</option>
           ))}
         </Select>
         <Select label={t('project.wizard.addPoint')} value={deviceCode} onChange={(e) => setDeviceCode(e.target.value)}>

@@ -505,6 +505,14 @@ export const uz: TranslationSchema = {
   cities: {
     tashkent: 'Toshkent',
   },
+  demo: {
+    projects: {
+      p1: 'Kvartira 78 m² — Yashnobod',
+      p2: 'Xususiy uy — Samarqand',
+      p3: 'Fresh Market doʻkoni',
+      p4: 'Kovorking ofisi — qoralama',
+    },
+  },
   admin: {
     title: 'Admin panel',
     users: 'Foydalanuvchilar',

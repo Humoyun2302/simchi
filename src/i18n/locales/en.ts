@@ -505,6 +505,14 @@ export const en: TranslationSchema = {
   cities: {
     tashkent: 'Tashkent',
   },
+  demo: {
+    projects: {
+      p1: 'Apartment 78 m² — Yashnabad',
+      p2: 'Private house — Samarkand',
+      p3: 'Fresh Market shop',
+      p4: 'Coworking office — draft',
+    },
+  },
   admin: {
     title: 'Admin panel',
     users: 'Users',

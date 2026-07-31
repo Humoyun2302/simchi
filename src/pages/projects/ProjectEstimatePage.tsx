@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { copyToClipboard, formatDate, formatMoney } from '@/lib/utils'
-import { translateMaterialName, translateWorkName } from '@/lib/labels'
+import { translateMaterialName, translateWorkName, translateProjectTitle } from '@/lib/labels'
 import { exportEstimateCsv, exportEstimatePdf, exportEstimateXlsx } from '@/features/estimates/export'
 import { useToastStore } from '@/stores/toast-store'
 import { EMPTY_LIST } from '@/lib/empty'
@@ -27,7 +27,7 @@ export function ProjectEstimatePage() {
   const payload = useMemo(() => {
     if (!project) return null
     return {
-      title: project.title,
+      title: translateProjectTitle(t, project.id, project.title),
       clientName: project.clients?.full_name ?? '',
       address: `${project.address ?? ''}, ${project.city ?? ''}`,
       status: project.status,
@@ -71,7 +71,7 @@ export function ProjectEstimatePage() {
       </button>
       <h1 className="text-3xl font-extrabold">{t('estimate.title')}</h1>
       <Card className="space-y-2">
-        <p className="font-bold">{project.title}</p>
+        <p className="font-bold">{translateProjectTitle(t, project.id, project.title)}</p>
         <p className="text-sm text-muted">{project.clients?.full_name}</p>
         <p className="text-sm text-muted">{payload.address}</p>
         <p className="text-sm">{t('estimate.validUntil')}: {formatDate(payload.validUntil)}</p>
