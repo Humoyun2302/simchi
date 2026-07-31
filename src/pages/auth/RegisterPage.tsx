@@ -24,7 +24,7 @@ type FormValues = {
 }
 
 export function RegisterPage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const signUp = useAuthStore((s) => s.signUp)
   const enterDemo = useAuthStore((s) => s.enterDemo)
@@ -44,7 +44,7 @@ export function RegisterPage() {
         city: z.string().min(2),
         company_name: z.string().optional(),
       }),
-    [t, i18n.language],
+    [t],
   )
 
   const form = useForm<FormValues>({

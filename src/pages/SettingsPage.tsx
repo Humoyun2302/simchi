@@ -2,8 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/ui/logo'
 import { Card } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
-import { setLocale } from '@/i18n'
-import i18n from '@/i18n'
+import { LanguageSelector } from '@/components/ui/language-selector'
 import { useAuthStore } from '@/stores/auth-store'
 
 export function SettingsPage() {
@@ -16,19 +15,10 @@ export function SettingsPage() {
     <div className="space-y-5">
       <PageHeader title={t('settings.title')} subtitle={t('settings.subtitle')} />
       <Card className="space-y-4">
-        <Select
-          label={t('settings.language')}
-          value={i18n.language}
-          onChange={(e) => setLocale(e.target.value as 'ru' | 'uz' | 'en')}
-          options={[
-            { value: 'ru', label: 'Русский' },
-            { value: 'uz', label: "O'zbekcha" },
-            { value: 'en', label: 'English' },
-          ]}
-        />
+        <LanguageSelector />
         {demoMode ? (
           <Select
-            label="Демо-роль"
+            label={t('settings.demoRole')}
             value={profile?.role ?? 'electrician'}
             onChange={(e) => setRoleLocal(e.target.value as 'electrician' | 'supplier' | 'admin')}
             options={[
@@ -38,7 +28,9 @@ export function SettingsPage() {
             ]}
           />
         ) : null}
-        <p className="text-sm text-muted">{t('settings.priceList')}: доступен в разделе работ проекта</p>
+        <p className="text-sm text-muted">
+          {t('settings.priceList')}: {t('settings.priceListHint')}
+        </p>
       </Card>
     </div>
   )

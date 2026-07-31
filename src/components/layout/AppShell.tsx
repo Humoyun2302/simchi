@@ -19,6 +19,8 @@ import { Button } from '@/components/ui/button'
 import { ToastViewport } from '@/components/ui/dialog'
 import { useToastStore } from '@/stores/toast-store'
 import { useAuthStore } from '@/stores/auth-store'
+import { useNewCalcFlow } from '@/stores/new-calc-flow'
+import { hydrateLocaleFromProfile } from '@/i18n'
 import { cn } from '@/lib/utils'
 
 const desktopLinks = [
@@ -43,6 +45,17 @@ export function AppShell() {
   const toasts = useToastStore((s) => s.items)
   const dismiss = useToastStore((s) => s.dismiss)
   const hideNav = shouldHideMobileNav(location.pathname)
+  const dialogOpen = useNewCalcFlow((s) => s.dialogOpen)
+  const requestNewCalc = useNewCalcFlow((s) => s.requestNewCalc)
+  const continueDraft = useNewCalcFlow((s) => s.continueDraft)
+  const startFresh = useNewCalcFlow((s) => s.startFresh)
+  const cancelDialog = useNewCalcFlow((s) => s.cancel)
+
+  useEffect(() => {
+    if (profile?.locale) {
+      void hydrateLocaleFromProfile(profile.locale)
+    }
+  }, [profile?.id, profile?.locale])
 
   useEffect(() => {
     const onFocusIn = (e: FocusEvent) => {
@@ -58,7 +71,7 @@ export function AppShell() {
   }, [])
 
   return (
-    <div className="min-h-dvh lg:flex">
+    <div className="min-h-dvh overflow-x-hidden lg:flex">
       <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-white/60 lg:bg-white/40 lg:backdrop-blur-xl lg:p-5">
         <Logo className="mb-8" />
         <nav className="flex flex-1 flex-col gap-1">
@@ -91,16 +104,16 @@ export function AppShell() {
             </NavLink>
           ) : null}
         </nav>
-        <Button variant="secondary" onClick={() => navigate('/projects/new')}>
+        <Button variant="secondary" onClick={() => requestNewCalc(navigate)}>
           <Plus size={18} />
           {t('home.newCalc')}
         </Button>
       </aside>
 
-      <div className="flex min-h-dvh flex-1 flex-col">
+      <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
         <main
           className={cn(
-            'mx-auto w-full max-w-6xl flex-1 px-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 lg:pb-8 lg:pt-6',
+            'mx-auto w-full max-w-6xl flex-1 overflow-x-hidden px-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 lg:pb-8 lg:pt-6',
             hideNav ? 'pb-6' : 'pb-nav lg:pb-8',
           )}
         >
@@ -118,7 +131,7 @@ export function AppShell() {
               <button
                 type="button"
                 aria-label={t('nav.newCalc')}
-                onClick={() => navigate('/projects/new')}
+                onClick={() => requestNewCalc(navigate)}
                 className="flex flex-col items-center justify-center"
               >
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-[0_10px_24px_rgb(63_127_241_/_0.35)] active:scale-95">
@@ -133,6 +146,32 @@ export function AppShell() {
       </div>
 
       <ToastViewport items={toasts} onDismiss={dismiss} />
+
+      {dialogOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="draft-dialog-title"
+        >
+          <div className="glass w-full max-w-md space-y-4 rounded-[28px] p-5 shadow-xl">
+            <h2 id="draft-dialog-title" className="text-xl font-extrabold leading-snug">
+              {t('draftDialog.title')}
+            </h2>
+            <div className="flex flex-col gap-2">
+              <Button className="w-full" onClick={() => continueDraft(navigate)}>
+                {t('draftDialog.continueDraft')}
+              </Button>
+              <Button variant="secondary" className="w-full" onClick={() => startFresh(navigate)}>
+                {t('draftDialog.startNew')}
+              </Button>
+              <Button variant="outline" className="w-full" onClick={cancelDialog}>
+                {t('draftDialog.cancel')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -144,7 +183,7 @@ function MobileItem({ to, icon: Icon, label }: { to: string; icon: typeof Home; 
       end={to === '/'}
       className={({ isActive }) =>
         cn(
-          'flex min-h-12 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-semibold leading-none text-muted',
+          'flex min-h-12 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-semibold leading-none text-muted',
           isActive && 'text-primary',
         )
       }

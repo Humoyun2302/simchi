@@ -73,7 +73,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           if (!isSupabaseConfigured) {
             const existing = get().profile
-            set({ demoMode: true, profile: existing ?? DEMO_PROFILE })
+            const profile = existing ?? DEMO_PROFILE
+            set({ demoMode: true, profile })
+            const { hydrateLocaleFromProfile } = await import('@/i18n')
+            void hydrateLocaleFromProfile(profile.locale)
             return
           }
 

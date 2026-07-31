@@ -1,5 +1,9 @@
 import { jsPDF } from 'jspdf'
 import * as XLSX from 'xlsx'
+import i18n from '@/i18n'
+import { formatCurrency, formatDate, formatUnit } from '@/lib/format'
+import { getAppLanguage, type AppLanguage } from '@/lib/locale'
+import { projectStatusI18nKey } from '@/lib/status'
 
 export interface EstimateExportPayload {
   title: string
@@ -19,13 +23,41 @@ export interface EstimateExportPayload {
   disclaimer: string
 }
 
+export interface EstimateExportLabels {
+  pdfTitle: string
+  client: string
+  address: string
+  status: string
+  created: string
+  validUntil: string
+  rooms: string
+  materials: string
+  works: string
+  name: string
+  qty: string
+  unit: string
+  price: string
+  total: string
+  materialsTotal: string
+  worksTotal: string
+  delivery: string
+  discount: string
+  grandTotal: string
+  empty: string
+  section: string
+  materialRow: string
+  workRow: string
+  untitled: string
+  payTotal: string
+}
+
 const FONT = 'DejaVuSans'
 let fontsReady: Promise<void> | null = null
 let regularB64 = ''
 let boldB64 = ''
 
-function money(n: number) {
-  return `${Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} UZS`
+function money(n: number, lang: AppLanguage) {
+  return formatCurrency(n, lang)
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -43,11 +75,11 @@ async function ensureFonts() {
     fontsReady = (async () => {
       const [regular, bold] = await Promise.all([
         fetch(`${import.meta.env.BASE_URL}fonts/DejaVuSans.ttf`).then((r) => {
-          if (!r.ok) throw new Error('Не удалось загрузить шрифт DejaVuSans')
+          if (!r.ok) throw new Error('Failed to load DejaVuSans font')
           return r.arrayBuffer()
         }),
         fetch(`${import.meta.env.BASE_URL}fonts/DejaVuSans-Bold.ttf`).then((r) => {
-          if (!r.ok) throw new Error('Не удалось загрузить шрифт DejaVuSans-Bold')
+          if (!r.ok) throw new Error('Failed to load DejaVuSans-Bold font')
           return r.arrayBuffer()
         }),
       ])
@@ -66,16 +98,45 @@ function registerFonts(doc: jsPDF) {
   doc.setFont(FONT, 'normal')
 }
 
-function formatShortDate(value: string) {
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+export function getEstimateExportLabels(lang: AppLanguage = getAppLanguage()): EstimateExportLabels {
+  const t = i18n.getFixedT(lang)
+  return {
+    pdfTitle: t('estimate.pdfTitle'),
+    client: t('estimate.pdfClient'),
+    address: t('estimate.pdfAddress'),
+    status: t('estimate.pdfStatus'),
+    created: t('estimate.pdfCreated'),
+    validUntil: t('estimate.pdfValidUntil'),
+    rooms: t('estimate.pdfRooms'),
+    materials: t('estimate.pdfMaterials'),
+    works: t('estimate.pdfWorks'),
+    name: t('estimate.pdfName'),
+    qty: t('estimate.pdfQty'),
+    unit: t('estimate.pdfUnit'),
+    price: t('estimate.pdfPrice'),
+    total: t('estimate.pdfTotal'),
+    materialsTotal: t('estimate.pdfMaterialsTotal'),
+    worksTotal: t('estimate.pdfWorksTotal'),
+    delivery: t('estimate.pdfDelivery'),
+    discount: t('estimate.pdfDiscount'),
+    grandTotal: t('estimate.pdfGrandTotal'),
+    empty: t('common.empty'),
+    section: t('common.all'),
+    materialRow: t('project.materials'),
+    workRow: t('project.works'),
+    untitled: '—',
+    payTotal: t('estimate.pdfGrandTotal'),
+  }
 }
 
 /**
  * jsPDF default fonts have no Cyrillic glyphs — embed DejaVu Sans.
  */
-export async function exportEstimatePdf(data: EstimateExportPayload) {
+export async function exportEstimatePdf(
+  data: EstimateExportPayload,
+  labels: EstimateExportLabels = getEstimateExportLabels(),
+  lang: AppLanguage = getAppLanguage(),
+) {
   await ensureFonts()
 
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
@@ -104,7 +165,6 @@ export async function exportEstimatePdf(data: EstimateExportPayload) {
     doc.text(value, x, yy, opts)
   }
 
-  // Header
   doc.setFont(FONT, 'bold')
   doc.setFontSize(20)
   doc.setTextColor(63, 127, 241)
@@ -114,26 +174,31 @@ export async function exportEstimatePdf(data: EstimateExportPayload) {
   doc.setFont(FONT, 'bold')
   doc.setFontSize(14)
   doc.setTextColor(16, 24, 40)
-  text('Смета электромонтажных работ', marginX, y)
+  text(labels.pdfTitle, marginX, y)
   y += 8
 
   doc.setFont(FONT, 'normal')
   doc.setFontSize(10)
   doc.setTextColor(80, 90, 110)
-  text(data.title || 'Без названия', marginX, y)
+  text(data.title || labels.untitled, marginX, y)
   y += 6
   if (data.clientName) {
-    text(`Клиент: ${data.clientName}`, marginX, y)
+    text(`${labels.client}: ${data.clientName}`, marginX, y)
     y += 5
   }
   if (data.address?.trim()) {
-    text(`Адрес: ${data.address}`, marginX, y)
+    text(`${labels.address}: ${data.address}`, marginX, y)
     y += 5
   }
-  text(`Дата: ${formatShortDate(data.createdAt)}`, marginX, y)
+  if (data.status) {
+    const statusLabel = i18n.getFixedT(lang)(projectStatusI18nKey(data.status))
+    text(`${labels.status}: ${statusLabel}`, marginX, y)
+    y += 5
+  }
+  text(`${labels.created}: ${formatDate(data.createdAt, lang)}`, marginX, y)
   y += 5
   if (data.validUntil) {
-    text(`Действует до: ${formatShortDate(data.validUntil)}`, marginX, y)
+    text(`${labels.validUntil}: ${formatDate(data.validUntil, lang)}`, marginX, y)
     y += 5
   }
 
@@ -143,19 +208,18 @@ export async function exportEstimatePdf(data: EstimateExportPayload) {
   doc.line(marginX, y, pageW - marginX, y)
   y += 8
 
-  // Totals box
   ensureSpace(28)
   doc.setFillColor(245, 248, 255)
   doc.roundedRect(marginX, y, contentW, 24, 2, 2, 'F')
   doc.setFont(FONT, 'normal')
   doc.setFontSize(10)
   doc.setTextColor(80, 90, 110)
-  text(`Материалы: ${money(data.materialsTotal)}`, marginX + 4, y + 7)
-  text(`Работы: ${money(data.worksTotal)}`, marginX + 4, y + 13)
+  text(`${labels.materialsTotal}: ${money(data.materialsTotal, lang)}`, marginX + 4, y + 7)
+  text(`${labels.worksTotal}: ${money(data.worksTotal, lang)}`, marginX + 4, y + 13)
   doc.setFont(FONT, 'bold')
   doc.setFontSize(12)
   doc.setTextColor(16, 24, 40)
-  text(`Итого: ${money(data.grandTotal)}`, marginX + 4, y + 20)
+  text(`${labels.grandTotal}: ${money(data.grandTotal, lang)}`, marginX + 4, y + 20)
   y += 32
 
   const drawSectionTitle = (title: string) => {
@@ -186,28 +250,23 @@ export async function exportEstimatePdf(data: EstimateExportPayload) {
     y += Math.max(lines.length, 1) * 4.6 + 2.2
   }
 
-  // Materials
-  drawSectionTitle('Материалы')
+  drawSectionTitle(labels.materials)
   if (data.materials.length === 0) {
-    drawRow('Нет позиций', '—', true)
+    drawRow(labels.empty, '—', true)
   } else {
     data.materials.forEach((m) => {
-      drawRow(
-        `${m.name} — ${m.qty} ${m.unit}`,
-        money(m.total),
-      )
+      drawRow(`${m.name} — ${m.qty} ${formatUnit(m.unit, lang)}`, money(m.total, lang))
     })
   }
 
   y += 4
 
-  // Works
-  drawSectionTitle('Работы')
+  drawSectionTitle(labels.works)
   if (data.works.length === 0) {
-    drawRow('Нет позиций', '—', true)
+    drawRow(labels.empty, '—', true)
   } else {
     data.works.forEach((w) => {
-      drawRow(`${w.name} — ${w.qty} шт`, money(w.total))
+      drawRow(`${w.name} — ${w.qty} ${formatUnit('pcs', lang)}`, money(w.total, lang))
     })
   }
 
@@ -221,8 +280,8 @@ export async function exportEstimatePdf(data: EstimateExportPayload) {
   doc.setFont(FONT, 'bold')
   doc.setFontSize(11)
   doc.setTextColor(16, 24, 40)
-  text('Итого к оплате', marginX, y)
-  text(money(data.grandTotal), pageW - marginX, y, { align: 'right' })
+  text(labels.payTotal, marginX, y)
+  text(money(data.grandTotal, lang), pageW - marginX, y, { align: 'right' })
   y += 10
 
   ensureSpace(24)
@@ -232,36 +291,73 @@ export async function exportEstimatePdf(data: EstimateExportPayload) {
   const disclaimerLines = doc.splitTextToSize(data.disclaimer, contentW) as string[]
   text(disclaimerLines, marginX, y)
 
-  doc.save(`simchi-smeta-${Date.now()}.pdf`)
+  doc.save(`simchi-estimate-${Date.now()}.pdf`)
 }
 
-export function exportEstimateCsv(data: EstimateExportPayload) {
+export function exportEstimateCsv(
+  data: EstimateExportPayload,
+  labels: EstimateExportLabels = getEstimateExportLabels(),
+  lang: AppLanguage = getAppLanguage(),
+) {
   const rows = [
-    ['Раздел', 'Название', 'Кол-во', 'Ед.', 'Цена', 'Сумма'],
-    ...data.materials.map((m) => ['материал', m.name, m.qty, m.unit, m.price, m.total]),
-    ...data.works.map((w) => ['работа', w.name, w.qty, 'шт', w.price, w.total]),
-    ['итого', 'Общая сумма', '', '', '', data.grandTotal],
+    [labels.section, labels.name, labels.qty, labels.unit, labels.price, labels.total],
+    ...data.materials.map((m) => [
+      labels.materialRow,
+      m.name,
+      m.qty,
+      formatUnit(m.unit, lang),
+      m.price,
+      m.total,
+    ]),
+    ...data.works.map((w) => [
+      labels.workRow,
+      w.name,
+      w.qty,
+      formatUnit('pcs', lang),
+      w.price,
+      w.total,
+    ]),
+    [labels.grandTotal, '', '', '', '', data.grandTotal],
   ]
   const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
-  downloadBlob(`\uFEFF${csv}`, `simchi-smeta-${Date.now()}.csv`, 'text/csv;charset=utf-8')
+  downloadBlob(`\uFEFF${csv}`, `simchi-estimate-${Date.now()}.csv`, 'text/csv;charset=utf-8')
 }
 
-export function exportEstimateXlsx(data: EstimateExportPayload) {
+export function exportEstimateXlsx(
+  data: EstimateExportPayload,
+  labels: EstimateExportLabels = getEstimateExportLabels(),
+  lang: AppLanguage = getAppLanguage(),
+) {
   const wb = XLSX.utils.book_new()
   const sheet = XLSX.utils.aoa_to_sheet([
-    ['SIMCHI — смета', data.title],
-    ['Клиент', data.clientName],
-    ['Адрес', data.address],
+    ['SIMCHI', data.title],
+    [labels.client, data.clientName],
+    [labels.address, data.address],
+    [labels.status, i18n.getFixedT(lang)(projectStatusI18nKey(data.status))],
     [],
-    ['Раздел', 'Название', 'Кол-во', 'Ед.', 'Цена', 'Сумма'],
-    ...data.materials.map((m) => ['материал', m.name, m.qty, m.unit, m.price, m.total]),
-    ...data.works.map((w) => ['работа', w.name, w.qty, 'шт', w.price, w.total]),
+    [labels.section, labels.name, labels.qty, labels.unit, labels.price, labels.total],
+    ...data.materials.map((m) => [
+      labels.materialRow,
+      m.name,
+      m.qty,
+      formatUnit(m.unit, lang),
+      m.price,
+      m.total,
+    ]),
+    ...data.works.map((w) => [
+      labels.workRow,
+      w.name,
+      w.qty,
+      formatUnit('pcs', lang),
+      w.price,
+      w.total,
+    ]),
     [],
-    ['Итого', data.grandTotal],
+    [labels.grandTotal, data.grandTotal],
     [data.disclaimer],
   ])
-  XLSX.utils.book_append_sheet(wb, sheet, 'Смета')
-  XLSX.writeFile(wb, `simchi-smeta-${Date.now()}.xlsx`)
+  XLSX.utils.book_append_sheet(wb, sheet, labels.pdfTitle.slice(0, 31))
+  XLSX.writeFile(wb, `simchi-estimate-${Date.now()}.xlsx`)
 }
 
 function downloadBlob(content: string, filename: string, type: string) {
