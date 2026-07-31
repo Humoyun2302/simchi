@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney } from '@/lib/utils'
+import { translateMaterialName, translateWorkName } from '@/lib/labels'
 import { exportEstimatePdf } from '@/features/estimates/export'
 import { useToastStore } from '@/stores/toast-store'
 import { EMPTY_LIST } from '@/lib/empty'
@@ -57,7 +58,12 @@ export function PublicEstimatePage() {
         {materials.length === 0 ? <p className="text-sm text-muted">—</p> : null}
         {materials.map((m) => (
           <div key={m.id} className="flex justify-between text-sm">
-            <span>{m.name}</span>
+            <span>
+              {translateMaterialName(t, {
+                name: m.name,
+                calculationSource: m.calculation_source,
+              })}
+            </span>
             <span>{formatMoney(m.total_price)}</span>
           </div>
         ))}
@@ -67,7 +73,7 @@ export function PublicEstimatePage() {
         {works.length === 0 ? <p className="text-sm text-muted">—</p> : null}
         {works.map((w) => (
           <div key={w.id} className="flex justify-between text-sm">
-            <span>{w.name}</span>
+            <span>{translateWorkName(t, w.work_type, w.name)}</span>
             <span>{formatMoney(w.total_price)}</span>
           </div>
         ))}
@@ -90,14 +96,17 @@ export function PublicEstimatePage() {
             validUntil: new Date().toISOString(),
             rooms: [],
             materials: materials.map((m) => ({
-              name: m.name,
+              name: translateMaterialName(t, {
+                name: m.name,
+                calculationSource: m.calculation_source,
+              }),
               qty: m.manual_qty ?? m.calculated_qty,
               unit: m.unit,
               price: m.unit_price,
               total: m.total_price,
             })),
             works: works.map((w) => ({
-              name: w.name,
+              name: translateWorkName(t, w.work_type, w.name),
               qty: w.quantity,
               price: w.unit_price,
               total: w.total_price,

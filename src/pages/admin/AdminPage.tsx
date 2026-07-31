@@ -9,6 +9,7 @@ import { DEMO_SUPPLIERS, useAppDataStore } from '@/stores/app-data-store'
 import { DEMO_PROFILE } from '@/stores/demo-data'
 import { DEFAULT_RULES } from '@/features/calculation-engine'
 import { formatMoney } from '@/lib/utils'
+import { translateMaterialName, translateRole } from '@/lib/labels'
 
 type Tab = 'users' | 'suppliers' | 'catalog' | 'rules' | 'orders' | 'ledger' | 'stats' | 'audit'
 
@@ -62,11 +63,11 @@ export function AdminPage() {
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead>
                 <tr className="text-muted">
-                  <th className="pb-3">Имя</th>
-                  <th>Email</th>
-                  <th>Роль</th>
-                  <th>Город</th>
-                  <th>Статус</th>
+                  <th className="pb-3">{t('admin.name')}</th>
+                  <th>{t('admin.email')}</th>
+                  <th>{t('admin.role')}</th>
+                  <th>{t('admin.city')}</th>
+                  <th>{t('admin.status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -84,18 +85,18 @@ export function AdminPage() {
                           )
                         }
                       >
-                        <option value="electrician">electrician</option>
-                        <option value="supplier">supplier</option>
-                        <option value="admin">admin</option>
+                        <option value="electrician">{translateRole(t, 'electrician')}</option>
+                        <option value="supplier">{translateRole(t, 'supplier')}</option>
+                        <option value="admin">{translateRole(t, 'admin')}</option>
                       </select>
                     </td>
                     <td>{u.city}</td>
-                    <td>active</td>
+                    <td>{t('admin.statusActive')}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="mt-3 text-sm text-muted">В демо роли меняются локально. В production — через Supabase profiles.</p>
+            <p className="mt-3 text-sm text-muted">{t('admin.demoRolesHint')}</p>
           </Card>
         )}
 
@@ -115,8 +116,8 @@ export function AdminPage() {
 
         {tab === 'catalog' && (
           <Card>
-            <p className="font-semibold">Canonical products / supplier offers управляются в БД.</p>
-            <p className="mt-2 text-sm text-muted">В MVP доступен справочник правил и демо-каталог на /catalog.</p>
+            <p className="font-semibold">{t('admin.catalogManaged')}</p>
+            <p className="mt-2 text-sm text-muted">{t('admin.catalogMvpHint')}</p>
           </Card>
         )}
 
@@ -125,7 +126,7 @@ export function AdminPage() {
             {DEFAULT_RULES.map((r) => (
               <Card key={r.id} className="flex justify-between gap-3">
                 <div>
-                  <p className="font-bold">{r.name}</p>
+                  <p className="font-bold">{translateMaterialName(t, { name: r.name, ruleId: r.id })}</p>
                   <p className="text-xs text-muted">{r.formula}</p>
                 </div>
                 <Badge tone={r.isActive ? 'success' : 'neutral'}>v{r.version}</Badge>
@@ -150,7 +151,7 @@ export function AdminPage() {
 
         {tab === 'ledger' && (
           <Card className="space-y-3">
-            <IntegerInput label="Комиссия SIMCHI %" value={commission} onValueChange={(v) => setCommission(v ?? 0)} />
+            <IntegerInput label={t('admin.commissionPercent')} value={commission} onValueChange={(v) => setCommission(v ?? 0)} />
             {orders.map((o) => (
               <div key={o.id} className="flex justify-between border-t border-white/70 pt-3 text-sm">
                 <span>{o.suppliers?.name}</span>
@@ -158,43 +159,43 @@ export function AdminPage() {
               </div>
             ))}
             <p className="text-sm text-muted">
-              Итого: {formatMoney(orders.reduce((s, o) => s + Math.round(o.subtotal * (commission / 100)), 0))}
+              {t('admin.total')}: {formatMoney(orders.reduce((s, o) => s + Math.round(o.subtotal * (commission / 100)), 0))}
             </p>
           </Card>
         )}
 
         {tab === 'stats' && (
           <div className="grid gap-3 sm:grid-cols-3">
-            <Card><p className="text-sm text-muted">Проекты</p><p className="text-2xl font-extrabold">{projects.length}</p></Card>
-            <Card><p className="text-sm text-muted">Заказы</p><p className="text-2xl font-extrabold">{orders.length}</p></Card>
-            <Card><p className="text-sm text-muted">Комиссии</p><p className="text-2xl font-extrabold">{formatMoney(orders.reduce((s, o) => s + Math.round(o.subtotal * (commission / 100)), 0))}</p></Card>
+            <Card><p className="text-sm text-muted">{t('admin.projects')}</p><p className="text-2xl font-extrabold">{projects.length}</p></Card>
+            <Card><p className="text-sm text-muted">{t('admin.orders')}</p><p className="text-2xl font-extrabold">{orders.length}</p></Card>
+            <Card><p className="text-sm text-muted">{t('admin.commissions')}</p><p className="text-2xl font-extrabold">{formatMoney(orders.reduce((s, o) => s + Math.round(o.subtotal * (commission / 100)), 0))}</p></Card>
           </div>
         )}
 
         {tab === 'audit' && (
           <Card className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <p className="font-semibold">Audit log</p>
+              <p className="font-semibold">{t('admin.audit')}</p>
               <Button
                 variant="outline"
                 onClick={() => {
                   setAuditEvents([
-                    { id: crypto.randomUUID(), at: new Date().toISOString(), text: `Просмотр заказов: ${orders.length}` },
-                    { id: crypto.randomUUID(), at: new Date().toISOString(), text: `Проектов в системе: ${projects.length}` },
+                    { id: crypto.randomUUID(), at: new Date().toISOString(), text: t('admin.auditOrdersView', { count: orders.length }) },
+                    { id: crypto.randomUUID(), at: new Date().toISOString(), text: t('admin.auditProjectsCount', { count: projects.length }) },
                     ...auditEvents,
                   ].slice(0, 20))
                 }}
               >
-                Обновить
+                {t('common.refresh')}
               </Button>
             </div>
             {auditEvents.length === 0 ? (
-              <p className="text-sm text-muted">Нажмите «Обновить», чтобы зафиксировать текущее состояние.</p>
+              <p className="text-sm text-muted">{t('admin.auditEmpty')}</p>
             ) : (
               auditEvents.map((e) => (
                 <div key={e.id} className="border-t border-white/70 pt-2 text-sm">
                   <p className="font-semibold">{e.text}</p>
-                  <p className="text-xs text-muted">{new Date(e.at).toLocaleString('ru-RU')}</p>
+                  <p className="text-xs text-muted">{new Date(e.at).toLocaleString()}</p>
                 </div>
               ))
             )}

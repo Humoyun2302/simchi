@@ -1,10 +1,13 @@
+import { useTranslation } from 'react-i18next'
 import type { HumanExplanation } from './explain-human'
 
 export function ExplanationContent({ explanation }: { explanation: HumanExplanation }) {
+  const { t } = useTranslation()
+
   if (explanation.unavailable) {
     return (
       <p className="pb-2 text-sm text-muted">
-        Подробное объяснение для этой позиции пока недоступно.
+        {t('calc.explanationUnavailable')}
       </p>
     )
   }

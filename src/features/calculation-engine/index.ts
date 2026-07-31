@@ -1,5 +1,5 @@
-export const CALC_DISCLAIMER =
-  'SIMCHI формирует предварительную смету. Окончательные технические решения должны быть проверены квалифицированным электриком'
+/** UI uses `t('calc.disclaimer')`; kept empty so engine warnings stay code-based. */
+export const CALC_DISCLAIMER = ''
 
 export interface CalcRule {
   id: string
@@ -100,7 +100,7 @@ export const DEFAULT_RULES: CalcRule[] = [
     packSize: 1,
     version: 1,
     isActive: true,
-    warning: 'Сечение кабеля требует проверки квалифицированным специалистом',
+    warning: 'cableSection',
     unitPrice: 18_500,
     category: 'cables',
   },
@@ -215,7 +215,7 @@ export const DEFAULT_RULES: CalcRule[] = [
     isActive: true,
     unitPrice: 85_000,
     category: 'other',
-    warning: 'Сечение и автомат для кондиционера требуют проверки специалиста',
+    warning: 'acSection',
   },
   {
     id: 'r-tv',
@@ -502,7 +502,7 @@ export function calculateProjectMaterials(
   manualOverrides: Record<string, number> = {},
 ): CalculationResult {
   const activeRules = rules.filter((r) => r.isActive)
-  const warnings: string[] = [CALC_DISCLAIMER]
+  const warnings: string[] = CALC_DISCLAIMER ? [CALC_DISCLAIMER] : []
   const materials: MaterialLine[] = []
 
   const separateLines = points.filter((p) => p.separateLine).reduce((s, p) => s + p.quantity, 0)

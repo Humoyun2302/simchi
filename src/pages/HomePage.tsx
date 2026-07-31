@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { ProjectCard } from '@/components/projects/ProjectCard'
 import { useAuthStore } from '@/stores/auth-store'
 import { useAppDataStore } from '@/stores/app-data-store'
+import { useNewCalcFlow } from '@/stores/new-calc-flow'
 import { filterProjects, getHomeStats } from '@/stores/demo-data'
 import { cn, formatMoneyCompact } from '@/lib/utils'
 
@@ -17,6 +18,7 @@ export function HomePage() {
   const demoMode = useAuthStore((s) => s.demoMode)
   const projects = useAppDataStore((s) => s.projects)
   const load = useAppDataStore((s) => s.load)
+  const requestNewCalc = useNewCalcFlow((s) => s.requestNewCalc)
   const [filter, setFilter] = useState('all')
   const [query, setQuery] = useState('')
 
@@ -75,7 +77,7 @@ export function HomePage() {
         <p className="mt-1 text-sm text-muted sm:text-base">{t('home.subtitle')}</p>
       </section>
 
-      <Button className="w-full shadow-[0_12px_28px_rgb(63_127_241_/_0.28)]" onClick={() => navigate('/projects/new')}>
+      <Button className="w-full shadow-[0_12px_28px_rgb(63_127_241_/_0.28)]" onClick={() => requestNewCalc(navigate)}>
         <Plus size={22} strokeWidth={2.5} />
         {t('home.newCalc')}
       </Button>
@@ -110,9 +112,9 @@ export function HomePage() {
       {filtered.length === 0 ? (
         <EmptyState
           title={t('common.empty')}
-          description="Создайте первый расчёт — это займёт пару минут"
+          description={t('home.emptyDescription')}
           action={
-            <Button onClick={() => navigate('/projects/new')}>
+            <Button onClick={() => requestNewCalc(navigate)}>
               <Plus size={18} />
               {t('home.newCalc')}
             </Button>

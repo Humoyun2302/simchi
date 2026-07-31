@@ -20,7 +20,7 @@ export function SuppliersPage() {
             <p className="text-sm text-muted">{s.city} · {s.address}</p>
             <p className="text-sm">{s.description}</p>
             <p className="text-sm text-muted">
-              {t('suppliers.discount')}: {s.electrician_discount_percent}% · мин. {formatMoney(s.min_order_amount)}
+              {t('suppliers.discount')}: {s.electrician_discount_percent}% · {t('suppliers.minOrder')} {formatMoney(s.min_order_amount)}
             </p>
           </Link>
         ))}

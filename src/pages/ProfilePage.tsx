@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/ui/logo'
 import { Card, Badge } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { LanguageSelector } from '@/components/ui/language-selector'
 import { useAuthStore } from '@/stores/auth-store'
 import { useToastStore } from '@/stores/toast-store'
 
@@ -57,15 +58,15 @@ export function ProfilePage() {
           </>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-2xl font-extrabold">{profile.full_name}</h2>
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+              <h2 className="min-w-0 break-words text-2xl font-extrabold">{profile.full_name}</h2>
               <Badge tone="primary">{profile.role}</Badge>
             </div>
             <p className="text-muted">{profile.email}</p>
             <p>{profile.phone}</p>
             <p>{profile.city}</p>
             {profile.company_name ? <p className="font-semibold">{profile.company_name}</p> : null}
-            {demoMode ? <Badge tone="warning">Гостевой режим</Badge> : <Badge tone="success">Аккаунт подключён</Badge>}
+            {demoMode ? <Badge tone="warning">{t('common.guestMode')}</Badge> : <Badge tone="success">{t('common.accountConnected')}</Badge>}
             <Button
               variant="secondary"
               className="w-full"
@@ -85,6 +86,10 @@ export function ProfilePage() {
         )}
       </Card>
 
+      <Card>
+        <LanguageSelector />
+      </Card>
+
       {demoMode ? (
         <div className="grid gap-3">
           <Button className="w-full" onClick={() => navigate('/login')}>
@@ -95,7 +100,7 @@ export function ProfilePage() {
             <UserPlus size={18} />
             {t('auth.register')}
           </Button>
-          <p className="text-center text-sm text-muted">Вход и регистрация необязательны</p>
+          <p className="text-center text-sm text-muted">{t('common.optionalAuth')}</p>
         </div>
       ) : (
         <Button

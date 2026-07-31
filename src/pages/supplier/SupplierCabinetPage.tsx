@@ -10,6 +10,7 @@ import { IntegerInput } from '@/components/ui/numeric-input'
 import { UzbekPhoneInput } from '@/components/ui/uzbek-phone-input'
 import { DEMO_SUPPLIERS, useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney } from '@/lib/utils'
+import { translateMaterialName } from '@/lib/labels'
 import { useToastStore } from '@/stores/toast-store'
 import type { OrderStatus } from '@/types/database'
 
@@ -115,9 +116,9 @@ export function SupplierCabinetPage() {
 
         {tab === 'company' && (
           <Card className="space-y-3">
-            <Input label="Название" value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} />
-            <UzbekPhoneInput label="Телефон" value={company.phone} onValueChange={(phone) => setCompany({ ...company, phone })} />
-            <Textarea label="Описание" value={company.description} onChange={(e) => setCompany({ ...company, description: e.target.value })} />
+            <Input label={t('common.name')} value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} />
+            <UzbekPhoneInput label={t('common.phone')} value={company.phone} onValueChange={(phone) => setCompany({ ...company, phone })} />
+            <Textarea label={t('common.description')} value={company.description} onChange={(e) => setCompany({ ...company, description: e.target.value })} />
             <Button
               onClick={() => {
                 localStorage.setItem('simchi-supplier-company', JSON.stringify(company))
@@ -133,13 +134,15 @@ export function SupplierCabinetPage() {
           <div className="space-y-3">
             {branches.map((b) => (
               <Card key={b.id} className="space-y-1">
-                <p className="font-bold">{b.name}</p>
+                <p className="font-bold">
+                  {b.name === 'Центральный склад' ? t('supplier.centralWarehouse') : b.name}
+                </p>
                 <p className="text-sm text-muted">{b.address}</p>
               </Card>
             ))}
             <Card className="space-y-3">
-              <Input label="Название филиала" value={branchName} onChange={(e) => setBranchName(e.target.value)} />
-              <Input label="Адрес" value={branchAddress} onChange={(e) => setBranchAddress(e.target.value)} />
+              <Input label={t('supplier.branchName')} value={branchName} onChange={(e) => setBranchName(e.target.value)} />
+              <Input label={t('project.address')} value={branchAddress} onChange={(e) => setBranchAddress(e.target.value)} />
               <Button
                 onClick={() => {
                   if (!branchName.trim()) return
@@ -167,7 +170,7 @@ export function SupplierCabinetPage() {
                 href={`data:text/csv;charset=utf-8,${encodeURIComponent(CSV_TEMPLATE)}`}
                 download="simchi-products-template.csv"
               >
-                Скачать шаблон CSV
+                {t('supplier.downloadCsvTemplate')}
               </a>
               <input
                 type="file"
@@ -182,28 +185,30 @@ export function SupplierCabinetPage() {
                     const cols = line.split(',')
                     return {
                       id: `imp-${Date.now()}-${i}`,
-                      name: cols[1] || `Товар ${i + 1}`,
+                      name: cols[1] || t('supplier.productFallback', { n: i + 1 }),
                       price: Number(cols[5]) || 0,
                       stock: Number(cols[6]) || 0,
                     }
                   })
                   persistProducts([...imported, ...products])
-                  push(`Импортировано: ${imported.length}`, 'success')
+                  push(t('supplier.importedCount', { count: imported.length }), 'success')
                 }}
               />
             </Card>
             {products.map((p) => (
               <Card key={p.id} className="grid gap-3 sm:grid-cols-3">
-                <p className="font-bold sm:col-span-3">{p.name}</p>
+                <p className="font-bold sm:col-span-3">
+                  {translateMaterialName(t, { name: p.name })}
+                </p>
                 <IntegerInput
-                  label="Цена"
+                  label={t('common.price')}
                   value={p.price}
                   onValueChange={(price) =>
                     persistProducts(products.map((x) => (x.id === p.id ? { ...x, price: price ?? 0 } : x)))
                   }
                 />
                 <IntegerInput
-                  label="Остаток"
+                  label={t('supplier.stock')}
                   value={p.stock}
                   onValueChange={(stock) =>
                     persistProducts(products.map((x) => (x.id === p.id ? { ...x, stock: stock ?? 0 } : x)))

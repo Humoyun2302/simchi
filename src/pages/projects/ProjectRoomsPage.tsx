@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { DecimalInput } from '@/components/ui/numeric-input'
 import { useAppDataStore } from '@/stores/app-data-store'
+import { formatUnit } from '@/lib/utils'
+import { translateRoomName } from '@/lib/labels'
 import { useState } from 'react'
 import type { RoomType } from '@/types/database'
 import { EMPTY_LIST } from '@/lib/empty'
@@ -34,7 +36,7 @@ export function ProjectRoomsPage() {
           <div className="flex items-start justify-between gap-2">
             <Input
               label={t('project.wizard.addRoom')}
-              value={room.name}
+              value={translateRoomName(t, room.name, room.room_type)}
               onChange={(e) => updateRoom(id, room.id, { name: e.target.value })}
             />
             <Button className="mt-6" variant="ghost" size="icon" onClick={() => deleteRoom(id, room.id)}>
@@ -56,7 +58,7 @@ export function ProjectRoomsPage() {
             <DecimalInput label={t('project.wizard.height')} value={room.height_m} onValueChange={(height_m) => updateRoom(id, room.id, { height_m: height_m ?? 0 })} />
           </div>
           <p className="text-sm text-muted">
-            {room.area_m2} м² · {room.perimeter_m} м
+            {room.area_m2} {formatUnit('m2')} · {room.perimeter_m} {formatUnit('m')}
           </p>
         </Card>
       ))}

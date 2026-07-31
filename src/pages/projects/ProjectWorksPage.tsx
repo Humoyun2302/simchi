@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { IntegerInput } from '@/components/ui/numeric-input'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { formatMoney } from '@/lib/utils'
+import { translateWorkName } from '@/lib/labels'
 import { useState } from 'react'
 import type { ProjectWorkItem } from '@/types/database'
 import { EMPTY_LIST } from '@/lib/empty'
@@ -66,13 +67,13 @@ export function ProjectWorksPage() {
       <h1 className="text-3xl font-extrabold">{t('project.works')}</h1>
       {works.length === 0 ? (
         <Button variant="secondary" className="w-full" onClick={seedDefaults}>
-          Заполнить типовыми работами
+          {t('project.fillTypicalWorks')}
         </Button>
       ) : null}
       {works.map((work) => (
         <Card key={work.id} className="space-y-3">
           <div className="flex justify-between gap-2">
-            <p className="font-bold">{work.name}</p>
+            <p className="font-bold">{translateWorkName(t, work.work_type, work.name)}</p>
             <Button
               variant="ghost"
               size="icon"
@@ -103,7 +104,7 @@ export function ProjectWorksPage() {
               }}
             />
             <IntegerInput
-              label="Цена"
+              label={t('project.workPrice')}
               value={work.unit_price}
               onValueChange={(unit_price) => {
                 const priceVal = unit_price ?? 0
@@ -127,8 +128,8 @@ export function ProjectWorksPage() {
         </Card>
       ))}
       <Card className="space-y-3">
-        <Input label="Своя работа" value={name} onChange={(e) => setName(e.target.value)} />
-        <IntegerInput label="Цена" value={price} onValueChange={setPrice} />
+        <Input label={t('project.customWork')} value={name} onChange={(e) => setName(e.target.value)} />
+        <IntegerInput label={t('project.workPrice')} value={price} onValueChange={setPrice} />
         <Button
           className="w-full"
           onClick={() => {
@@ -140,7 +141,7 @@ export function ProjectWorksPage() {
                 id: crypto.randomUUID(),
                 project_id: id,
                 work_price_item_id: null,
-                name: name || 'Другая работа',
+                name: name || t('project.otherWork'),
                 work_type: 'custom',
                 quantity: 1,
                 unit_price: unit,

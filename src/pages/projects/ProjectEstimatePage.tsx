@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAppDataStore } from '@/stores/app-data-store'
 import { copyToClipboard, formatDate, formatMoney } from '@/lib/utils'
+import { translateMaterialName, translateWorkName, translateProjectTitle } from '@/lib/labels'
 import { exportEstimateCsv, exportEstimatePdf, exportEstimateXlsx } from '@/features/estimates/export'
 import { useToastStore } from '@/stores/toast-store'
 import { EMPTY_LIST } from '@/lib/empty'
@@ -26,7 +27,7 @@ export function ProjectEstimatePage() {
   const payload = useMemo(() => {
     if (!project) return null
     return {
-      title: project.title,
+      title: translateProjectTitle(t, project.id, project.title),
       clientName: project.clients?.full_name ?? '',
       address: `${project.address ?? ''}, ${project.city ?? ''}`,
       status: project.status,
@@ -39,14 +40,17 @@ export function ProjectEstimatePage() {
       validUntil: new Date(Date.now() + 14 * 86400000).toISOString(),
       rooms: rooms.map((r) => r.name),
       materials: materials.map((m) => ({
-        name: m.name,
+        name: translateMaterialName(t, {
+          name: m.name,
+          calculationSource: m.calculation_source,
+        }),
         qty: m.manual_qty ?? m.calculated_qty,
         unit: m.unit,
         price: m.unit_price,
         total: m.total_price,
       })),
       works: works.map((w) => ({
-        name: w.name,
+        name: translateWorkName(t, w.work_type, w.name),
         qty: w.quantity,
         price: w.unit_price,
         total: w.total_price,
@@ -67,7 +71,7 @@ export function ProjectEstimatePage() {
       </button>
       <h1 className="text-3xl font-extrabold">{t('estimate.title')}</h1>
       <Card className="space-y-2">
-        <p className="font-bold">{project.title}</p>
+        <p className="font-bold">{translateProjectTitle(t, project.id, project.title)}</p>
         <p className="text-sm text-muted">{project.clients?.full_name}</p>
         <p className="text-sm text-muted">{payload.address}</p>
         <p className="text-sm">{t('estimate.validUntil')}: {formatDate(payload.validUntil)}</p>
@@ -77,13 +81,18 @@ export function ProjectEstimatePage() {
         <h3 className="font-bold">{t('project.materials')}</h3>
         {materials.length === 0 ? (
           <div className="space-y-2">
-            <p className="text-sm text-muted">Нет позиций — пересчитайте проект</p>
-            <Button variant="secondary" onClick={() => recalculateProject(id)}>Пересчитать</Button>
+            <p className="text-sm text-muted">{t('estimate.noItems')}</p>
+            <Button variant="secondary" onClick={() => recalculateProject(id)}>{t('estimate.recalculate')}</Button>
           </div>
         ) : null}
         {materials.map((m) => (
           <div key={m.id} className="flex justify-between gap-3 text-sm">
-            <span>{m.name}</span>
+            <span>
+              {translateMaterialName(t, {
+                name: m.name,
+                calculationSource: m.calculation_source,
+              })}
+            </span>
             <span className="font-semibold">{formatMoney(m.total_price)}</span>
           </div>
         ))}
@@ -93,7 +102,7 @@ export function ProjectEstimatePage() {
         {works.length === 0 ? <p className="text-sm text-muted">—</p> : null}
         {works.map((w) => (
           <div key={w.id} className="flex justify-between gap-3 text-sm">
-            <span>{w.name}</span>
+            <span>{translateWorkName(t, w.work_type, w.name)}</span>
             <span className="font-semibold">{formatMoney(w.total_price)}</span>
           </div>
         ))}
@@ -120,10 +129,10 @@ export function ProjectEstimatePage() {
           const url = `${window.location.origin}/estimate/public/${token}`
           const ok = await copyToClipboard(url)
           updateProject(project.id, { status: 'sent' })
-          push(ok ? 'Ссылка скопирована' : `Ссылка: ${url}`, ok ? 'success' : 'info')
+          push(ok ? t('estimate.linkCopied') : t('estimate.linkFallback', { url }), ok ? 'success' : 'info')
         }}
       >
-        Отправить клиенту
+        {t('estimate.sendToClient')}
       </Button>
     </div>
   )

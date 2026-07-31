@@ -1,25 +1,5 @@
+import i18n from '@/i18n'
 import type { CalculationTrace, MaterialLine } from './index'
-
-const INPUT_LABELS: Record<string, string> = {
-  panels_count: 'Количество электрощитов',
-  points_count: 'Количество электрических точек',
-  rooms_count: 'Количество помещений',
-  rooms: 'Количество помещений',
-  route_length: 'Длина маршрута',
-  totalRoute: 'Маршрут внутри помещения',
-  distance_to_panel: 'Расстояние до щита',
-  distanceToPanel_m: 'Расстояние до щита',
-  vertical: 'Вертикальные участки',
-  separateLines: 'Отдельные линии',
-  coefficient: 'Коэффициент',
-  reserve_percent: 'Запас',
-  sparePercent: 'Запас',
-  quantity: 'Количество',
-  device_points: 'Количество электрических точек',
-  devicePoints: 'Количество электрических точек',
-  cable_meters: 'Длина кабеля',
-  deviceCode: 'Тип точки',
-}
 
 const UNIT_FOR_KEY: Record<string, string> = {
   totalRoute: 'м',
@@ -32,9 +12,14 @@ const UNIT_FOR_KEY: Record<string, string> = {
   sparePercent: '%',
 }
 
+function t(key: string, opts?: Record<string, unknown>) {
+  return i18n.t(key, opts)
+}
+
 function humanizeKey(key: string): string {
-  if (INPUT_LABELS[key]) return INPUT_LABELS[key]
-  // Never show snake_case / camelCase to the user
+  const labelKey = `calc.explain.inputLabels.${key}`
+  const translated = t(labelKey)
+  if (translated !== labelKey) return translated
   return key
     .replace(/_/g, ' ')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
@@ -44,8 +29,16 @@ function humanizeKey(key: string): string {
 }
 
 function formatInputValue(key: string, value: number | string | boolean): string {
-  if (typeof value === 'boolean') return value ? 'Да' : 'Нет'
-  if (typeof value === 'string') return value
+  if (typeof value === 'boolean') return value ? t('calc.explain.yes') : t('calc.explain.no')
+  if (typeof value === 'string') {
+    // Translate device codes in inputs
+    if (key === 'deviceCode') {
+      const deviceKey = `project.devices.${value}`
+      const translated = t(deviceKey)
+      if (translated !== deviceKey) return translated
+    }
+    return value
+  }
   const unit = UNIT_FOR_KEY[key]
   if (unit === '%') return `${value}%`
   if (unit) return `${value} ${unit}`
@@ -65,53 +58,98 @@ export interface HumanExplanation {
 
 function materialKindTitle(name: string): string {
   const lower = name.toLowerCase()
-  if (lower.includes('кабель')) return `Почему добавлен кабель?`
-  if (lower.includes('щит')) return `Почему добавлен электрощит?`
-  if (lower.includes('розетк')) return `Почему добавлена розетка?`
-  if (lower.includes('выключател')) return `Почему добавлен выключатель?`
-  if (lower.includes('гофра')) return `Почему добавлена гофра?`
-  if (lower.includes('подрозетник')) return `Почему добавлен подрозетник?`
-  if (lower.includes('коробк')) return `Почему добавлена коробка?`
-  return `Почему добавлено: ${name}?`
+  if (lower.includes('кабель') || lower.includes('cable') || lower.includes('kabel')) {
+    return t('calc.explain.whyCable')
+  }
+  if (lower.includes('щит') || lower.includes('panel') || lower.includes('shield')) {
+    return t('calc.explain.whyPanel')
+  }
+  if (lower.includes('розетк') || lower.includes('socket') || lower.includes('rozetka')) {
+    return t('calc.explain.whySocket')
+  }
+  if (lower.includes('выключател') || lower.includes('switch') || lower.includes('oʻchirgich') || lower.includes("o'chirgich")) {
+    return t('calc.explain.whySwitch')
+  }
+  if (lower.includes('гофра') || lower.includes('conduit') || lower.includes('gofra')) {
+    return t('calc.explain.whyConduit')
+  }
+  if (lower.includes('подрозетник') || lower.includes('mounting') || lower.includes('podrozetnik')) {
+    return t('calc.explain.whyBox')
+  }
+  if (lower.includes('коробк') || lower.includes('junction') || lower.includes('quti')) {
+    return t('calc.explain.whyJunction')
+  }
+  return t('calc.explain.whyNamed', { name })
 }
 
 function formatCalcLine(line: MaterialLine, trace: CalculationTrace): string {
   const inputs = trace.inputs
+  const coefLabel = t('calc.explain.coefLabel')
   if ('quantity' in inputs && typeof inputs.quantity === 'number') {
-    return `${inputs.quantity} × коэффициент ${trace.coefficient}`
+    return t('calc.explain.qtyTimesCoef', {
+      qty: inputs.quantity,
+      coefLabel,
+      coef: trace.coefficient,
+    })
   }
   if ('device_points' in inputs && typeof inputs.device_points === 'number') {
-    return `${inputs.device_points} точек × коэффициент ${trace.coefficient}`
+    return t('calc.explain.pointsTimesCoef', {
+      qty: inputs.device_points,
+      pointsLabel: t('calc.explain.pointsShort'),
+      coefLabel,
+      coef: trace.coefficient,
+    })
   }
   if ('rooms_count' in inputs && typeof inputs.rooms_count === 'number') {
-    return `${inputs.rooms_count} помещ. × коэффициент ${trace.coefficient}`
+    return t('calc.explain.roomsTimesCoef', {
+      qty: inputs.rooms_count,
+      roomsShort: t('calc.explain.roomsShort'),
+      coefLabel,
+      coef: trace.coefficient,
+    })
   }
   if ('rooms' in inputs && typeof inputs.rooms === 'number' && 'totalRoute' in inputs) {
-    return `Базовая длина с учётом маршрута и щита × коэффициент ${trace.coefficient}`
+    return t('calc.explain.cableBaseTimesCoef', {
+      coefLabel,
+      coef: trace.coefficient,
+    })
   }
   if ('cable_meters' in inputs && typeof inputs.cable_meters === 'number') {
-    return `${inputs.cable_meters} м кабеля × 1.05 × коэффициент ${trace.coefficient}`
+    return t('calc.explain.cableMetersTimesCoef', {
+      meters: inputs.cable_meters,
+      metersUnit: t('calc.explain.metersCable'),
+      coefLabel,
+      coef: trace.coefficient,
+    })
   }
-  if ('panels_count' in inputs || line.name.toLowerCase().includes('щит')) {
+  if ('panels_count' in inputs || line.name.toLowerCase().includes('щит') || line.ruleId === 'r-panel') {
     const count =
       typeof inputs.panels_count === 'number'
         ? inputs.panels_count
         : typeof inputs.quantity === 'number'
           ? inputs.quantity
           : 1
-    return `${count} щит × коэффициент ${trace.coefficient}`
+    return t('calc.explain.panelsTimesCoef', {
+      qty: count,
+      panelShort: t('calc.explain.panelShort'),
+      coefLabel,
+      coef: trace.coefficient,
+    })
   }
-  return `Исходные данные × коэффициент ${trace.coefficient}`
+  return t('calc.explain.inputsTimesCoef', {
+    coefLabel,
+    coef: trace.coefficient,
+  })
 }
 
 /**
- * Transform calculation traces into clear Russian sections.
+ * Transform calculation traces into clear localized sections.
  * Never exposes raw JSON or snake_case keys.
  */
 export function formatMaterialExplanation(line: MaterialLine | null | undefined): HumanExplanation {
   if (!line?.trace) {
     return {
-      title: 'Почему добавлено?',
+      title: t('calc.explain.whyAdded'),
       sections: [],
       unavailable: true,
     }
@@ -123,19 +161,18 @@ export function formatMaterialExplanation(line: MaterialLine | null | undefined)
   const basisLines =
     inputEntries.length > 0
       ? inputEntries.map(([key, value]) => `${humanizeKey(key)}: ${formatInputValue(key, value)}`)
-      : ['Данные расчёта недоступны']
+      : [t('calc.explain.unavailableData')]
 
   const spareLines =
-    trace.sparePercent > 0 ? [`${trace.sparePercent}%`] : ['Не применяется']
+    trace.sparePercent > 0 ? [`${trace.sparePercent}%`] : [t('calc.explain.notApplied')]
 
   const unit = line.unit || 'шт'
 
-  // Cable-style: show base length before spare
   const isCableLike =
     'totalRoute' in trace.inputs || 'distanceToPanel_m' in trace.inputs || line.unit === 'м'
 
   const sections: ExplanationSection[] = [
-    { title: 'Основание', lines: basisLines },
+    { title: t('calc.explain.basis'), lines: basisLines },
   ]
 
   if (isCableLike && 'totalRoute' in trace.inputs) {
@@ -144,29 +181,34 @@ export function formatMaterialExplanation(line: MaterialLine | null | undefined)
       (typeof trace.inputs.distanceToPanel_m === 'number' ? trace.inputs.distanceToPanel_m : 0) +
       (typeof trace.inputs.vertical === 'number' ? trace.inputs.vertical : 0)
     sections.push({
-      title: 'Базовая длина',
+      title: t('calc.explain.baseLength'),
       lines: [`${Math.round(base * 100) / 100} м`],
     })
-    sections.push({ title: 'Запас', lines: spareLines })
+    sections.push({ title: t('calc.explain.spare'), lines: spareLines })
   } else {
     sections.push({
-      title: 'Расчёт',
+      title: t('calc.explain.calculation'),
       lines: [formatCalcLine(line, trace)],
     })
-    sections.push({ title: 'Запас', lines: spareLines })
+    sections.push({ title: t('calc.explain.spare'), lines: spareLines })
     sections.push({
-      title: 'Количество до округления',
+      title: t('calc.explain.beforeRound'),
       lines: [`${trace.beforeRound} ${unit}.`],
     })
   }
 
   sections.push({
-    title: 'Итоговое количество',
+    title: t('calc.explain.finalQty'),
     lines: [`${trace.finalQty} ${unit}.`],
   })
 
+  // Prefer translated material name for kind detection
+  const materialKey = `calc.materials.${line.ruleId}`
+  const localizedName = t(materialKey)
+  const nameForTitle = localizedName !== materialKey ? localizedName : line.name
+
   return {
-    title: materialKindTitle(line.name),
+    title: materialKindTitle(nameForTitle),
     sections,
   }
 }

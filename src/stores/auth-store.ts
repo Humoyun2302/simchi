@@ -45,7 +45,7 @@ function profileFromSession(user: {
   return {
     id: user.id,
     email: user.email ?? '',
-    full_name: String(meta.full_name ?? user.email ?? 'Пользователь'),
+    full_name: String(meta.full_name ?? user.email ?? 'User'),
     phone: (meta.phone as string | null) ?? null,
     city: (meta.city as string | null) ?? null,
     company_name: (meta.company_name as string | null) ?? null,
@@ -73,7 +73,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           if (!isSupabaseConfigured) {
             const existing = get().profile
-            set({ demoMode: true, profile: existing ?? DEMO_PROFILE })
+            const profile = existing ?? DEMO_PROFILE
+            set({ demoMode: true, profile })
+            const { hydrateLocaleFromProfile } = await import('@/i18n')
+            void hydrateLocaleFromProfile(profile.locale)
             return
           }
 
@@ -82,9 +85,15 @@ export const useAuthStore = create<AuthState>()(
             const profile =
               (await fetchProfile(data.session.user.id)) ?? profileFromSession(data.session.user)
             set({ profile, demoMode: false })
+            const { hydrateLocaleFromProfile } = await import('@/i18n')
+            void hydrateLocaleFromProfile(profile.locale)
           } else {
             const existing = get().profile
             set({ demoMode: true, profile: existing ?? DEMO_PROFILE })
+            if (existing?.locale) {
+              const { hydrateLocaleFromProfile } = await import('@/i18n')
+              void hydrateLocaleFromProfile(existing.locale)
+            }
           }
 
           supabase.auth.onAuthStateChange((_event, session) => {
@@ -95,6 +104,8 @@ export const useAuthStore = create<AuthState>()(
               }
               const profile = (await fetchProfile(session.user.id)) ?? profileFromSession(session.user)
               set({ profile, demoMode: false })
+              const { hydrateLocaleFromProfile } = await import('@/i18n')
+              void hydrateLocaleFromProfile(profile.locale)
             })()
           })
         } finally {
@@ -115,6 +126,8 @@ export const useAuthStore = create<AuthState>()(
           if (data.user) {
             const profile = (await fetchProfile(data.user.id)) ?? profileFromSession(data.user)
             set({ profile, demoMode: false })
+            const { hydrateLocaleFromProfile } = await import('@/i18n')
+            void hydrateLocaleFromProfile(profile.locale)
           }
         } catch (e) {
           throw new Error(getSupabaseErrorMessage(e))
@@ -157,6 +170,8 @@ export const useAuthStore = create<AuthState>()(
           if (data.session?.user) {
             const profile = (await fetchProfile(data.session.user.id)) ?? profileFromSession(data.session.user)
             set({ profile, demoMode: false })
+            const { hydrateLocaleFromProfile } = await import('@/i18n')
+            void hydrateLocaleFromProfile(profile.locale)
           } else if (data.user) {
             // Email confirmation may be required — keep guest/demo until confirmed
             set({
@@ -180,9 +195,8 @@ export const useAuthStore = create<AuthState>()(
 
       resetPassword: async (email) => {
         if (!isSupabaseConfigured) {
-          throw new Error(
-            'Сброс пароля доступен после подключения Supabase. В демо войдите с любым паролем.',
-          )
+          const { default: i18n } = await import('@/i18n')
+          throw new Error(i18n.t('auth.resetUnavailable'))
         }
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/login`,

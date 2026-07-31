@@ -15,28 +15,22 @@ import { useAppDataStore, toCalcParams, type WizardDraft } from '@/stores/app-da
 import { useAuthStore } from '@/stores/auth-store'
 import { useToastStore } from '@/stores/toast-store'
 import { DEVICE_TYPES, calculateProjectMaterials } from '@/features/calculation-engine'
-import {
-  formatMaterialExplanation,
-} from '@/features/calculation-engine/explain-human'
+import { formatMaterialExplanation } from '@/features/calculation-engine/explain-human'
 import { ExplanationContent } from '@/features/calculation-engine/ExplanationContent'
-import { formatMoney, calcArea, calcPerimeter } from '@/lib/utils'
+import { formatMoney, calcArea, calcPerimeter, formatUnit } from '@/lib/utils'
+import { translateDeviceName, translateMaterialName, translateWarning, translateRoomName } from '@/lib/labels'
 import { isValidUzbekPhone, normalizeUzbekPhone } from '@/lib/phone'
 import type { ObjectType, RoomType, WiringType, WorkKind, RoutingMethod } from '@/types/database'
 
 const STEPS = 6
 
-/** Wizard order: Object → Rooms → Points → Params → Result → Client (last) */
-const STEP_OBJECT = 0
-const STEP_ROOMS = 1
-const STEP_POINTS = 2
-const STEP_PARAMS = 3
-const STEP_RESULT = 4
-const STEP_CLIENT = 5
-
-const phoneError = 'Введите полный номер телефона'
-const floorsRequired = 'Укажите количество этажей'
-const floorsMin = 'Количество этажей должно быть не меньше 1'
-const heightInvalid = 'Введите корректную высоту установки'
+/** Wizard order: Client → Object → Rooms → Points → Params → Result */
+const STEP_CLIENT = 0
+const STEP_OBJECT = 1
+const STEP_ROOMS = 2
+const STEP_POINTS = 3
+const STEP_PARAMS = 4
+const STEP_RESULT = 5
 
 export function ProjectWizardPage() {
   const { t } = useTranslation()
@@ -45,7 +39,6 @@ export function ProjectWizardPage() {
   const setWizard = useAppDataStore((s) => s.setWizard)
   const clients = useAppDataStore((s) => s.clients)
   const saveWizardProject = useAppDataStore((s) => s.saveWizardProject)
-  const restoreWizardDraft = useAppDataStore((s) => s.restoreWizardDraft)
   const profile = useAuthStore((s) => s.profile)
   const push = useToastStore((s) => s.push)
   const [traceId, setTraceId] = useState<string | null>(null)
@@ -53,18 +46,22 @@ export function ProjectWizardPage() {
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Remount-safe: ensure draftId exists (fresh sessions already set by startFreshWizard)
   useEffect(() => {
-    void restoreWizardDraft()
-  }, [restoreWizardDraft])
+    if (!wizard.draftId) {
+      setWizard({ draftId: crypto.randomUUID(), step: 0 })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on mount
+  }, [])
 
   const step = wizard.step
   const titles = [
+    t('project.wizard.stepClient'),
     t('project.wizard.stepObject'),
     t('project.wizard.stepRooms'),
     t('project.wizard.stepPoints'),
     t('project.wizard.stepParams'),
     t('project.wizard.stepResult'),
-    t('project.wizard.stepClient'),
   ]
 
   const calc = useMemoCalc(wizard)
@@ -82,16 +79,24 @@ export function ProjectWizardPage() {
   const validateWizard = (w: WizardDraft, s: number): Record<string, string> => {
     const nextErrors: Record<string, string> = {}
 
+    if (s === STEP_CLIENT && w.clientMode === 'new') {
+      if (!w.client.full_name.trim()) nextErrors.full_name = t('validation.clientName')
+      if (!isValidUzbekPhone(w.client.phone)) nextErrors.phone = t('validation.phoneComplete')
+    }
+    if (s === STEP_CLIENT && w.clientMode === 'existing' && !w.clientId) {
+      nextErrors.clientId = t('common.required')
+    }
+
     if (s === STEP_OBJECT) {
       if (!w.project.title.trim() && !w.project.address.trim()) {
         nextErrors.title = t('common.required')
       }
       if (w.project.floors_count == null) {
-        nextErrors.floors_count = floorsRequired
+        nextErrors.floors_count = t('validation.floorsRequired')
       } else if (w.project.floors_count < 1) {
-        nextErrors.floors_count = floorsMin
+        nextErrors.floors_count = t('validation.floorsMin')
       } else if (w.project.floors_count > 100) {
-        nextErrors.floors_count = 'Количество этажей должно быть не больше 100'
+        nextErrors.floors_count = t('validation.floorsMax')
       }
     }
 
@@ -103,20 +108,12 @@ export function ProjectWizardPage() {
       if (w.points.length === 0) nextErrors.points = t('common.required')
       w.points.forEach((p) => {
         if (p.install_height_m != null && (Number.isNaN(p.install_height_m) || p.install_height_m < 0)) {
-          nextErrors[`height_${p.id}`] = heightInvalid
+          nextErrors[`height_${p.id}`] = t('validation.heightInvalid')
         }
         if (p.quantity == null || p.quantity < 1) {
           nextErrors[`qty_${p.id}`] = t('common.required')
         }
       })
-    }
-
-    if (s === STEP_CLIENT && w.clientMode === 'new') {
-      if (!w.client.full_name.trim()) nextErrors.full_name = t('common.required')
-      if (!isValidUzbekPhone(w.client.phone)) nextErrors.phone = phoneError
-    }
-    if (s === STEP_CLIENT && w.clientMode === 'existing' && !w.clientId) {
-      nextErrors.clientId = t('common.required')
     }
 
     return nextErrors
@@ -135,7 +132,7 @@ export function ProjectWizardPage() {
       const nextErrors = validateWizard(w, step)
       setErrors(nextErrors)
       if (Object.keys(nextErrors).length > 0) {
-        push('Заполните обязательные поля шага', 'error')
+        push(t('common.fillRequired'), 'error')
         return
       }
       setWizard({ step: Math.min(STEPS - 1, step + 1) })
@@ -156,6 +153,13 @@ export function ProjectWizardPage() {
     afterCommit(() => {
       void (async () => {
         const w = useAppDataStore.getState().wizard
+        const clientErrors = validateWizard(w, STEP_CLIENT)
+        if (Object.keys(clientErrors).length > 0) {
+          setErrors(clientErrors)
+          setWizard({ step: STEP_CLIENT })
+          push(t('validation.specifyClient'), 'error')
+          return
+        }
         const objectErrors = validateWizard(w, STEP_OBJECT)
         if (Object.keys(objectErrors).length > 0) {
           setErrors(objectErrors)
@@ -163,15 +167,8 @@ export function ProjectWizardPage() {
           return
         }
         if (w.rooms.length === 0) {
-          push('Добавьте хотя бы одно помещение', 'error')
+          push(t('validation.addRoom'), 'error')
           setWizard({ step: STEP_ROOMS })
-          return
-        }
-        const clientErrors = validateWizard(w, STEP_CLIENT)
-        if (Object.keys(clientErrors).length > 0) {
-          setErrors(clientErrors)
-          setWizard({ step: STEP_CLIENT })
-          push('Укажите клиента', 'error')
           return
         }
         setSaving(true)
@@ -201,6 +198,8 @@ export function ProjectWizardPage() {
     wizard.project.floors_count >= 1 &&
     wizard.project.floors_count <= 100
 
+  const deviceLabel = (code: string) => translateDeviceName(t, code)
+
   return (
     <div className="flex min-h-0 flex-col">
       <div className="space-y-4 pb-28 sm:space-y-5">
@@ -211,7 +210,11 @@ export function ProjectWizardPage() {
 
         <div>
           <p className="text-sm font-semibold text-primary">
-            {step + 1} / {STEPS}
+            {t('project.wizard.progress', {
+              current: step + 1,
+              total: STEPS,
+              title: titles[step],
+            })}
           </p>
           <h1 className="text-[1.6rem] font-extrabold leading-tight sm:text-3xl">{titles[step]}</h1>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/70">
@@ -221,11 +224,11 @@ export function ProjectWizardPage() {
 
         {step === STEP_CLIENT && (
           <Card className="space-y-4">
-            <div className="flex gap-2">
-              <Button variant={wizard.clientMode === 'existing' ? 'primary' : 'outline'} className="h-12 flex-1" onClick={() => setWizard({ clientMode: 'existing' })}>
+            <div className="flex min-w-0 flex-wrap gap-2">
+              <Button variant={wizard.clientMode === 'existing' ? 'primary' : 'outline'} className="h-12 min-w-0 flex-1" onClick={() => setWizard({ clientMode: 'existing' })}>
                 {t('project.wizard.existingClient')}
               </Button>
-              <Button variant={wizard.clientMode === 'new' ? 'primary' : 'outline'} className="h-12 flex-1" onClick={() => setWizard({ clientMode: 'new' })}>
+              <Button variant={wizard.clientMode === 'new' ? 'primary' : 'outline'} className="h-12 min-w-0 flex-1" onClick={() => setWizard({ clientMode: 'new' })}>
                 {t('project.wizard.newClient')}
               </Button>
             </div>
@@ -315,13 +318,15 @@ export function ProjectWizardPage() {
           <div className="space-y-4">
             {wizard.rooms.map((room, idx) => (
               <Card key={room.id} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold">{room.name || `${t('project.rooms')} ${idx + 1}`}</h3>
+                <div className="flex min-w-0 items-center justify-between gap-2">
+                  <h3 className="min-w-0 break-words font-bold">
+                    {translateRoomName(t, room.name, room.room_type) || `${t('project.rooms')} ${idx + 1}`}
+                  </h3>
                   <Button variant="ghost" size="icon" onClick={() => setWizard({ rooms: wizard.rooms.filter((r) => r.id !== room.id) })}>
                     <Trash2 size={16} />
                   </Button>
                 </div>
-                <Input label={t('common.create')} value={room.name} onChange={(e) => updateRoom(setWizard, wizard, room.id, { name: e.target.value })} />
+                <Input label={t('common.name')} value={room.name} onChange={(e) => updateRoom(setWizard, wizard, room.id, { name: e.target.value })} />
                 <Select label={t('project.objectType')} value={room.room_type} onChange={(e) => updateRoom(setWizard, wizard, room.id, { room_type: e.target.value as RoomType })}>
                   {(['kitchen', 'bedroom', 'living_room', 'bathroom', 'hallway', 'office', 'technical', 'other'] as const).map((k) => (
                     <option key={k} value={k}>{t(`project.roomTypes.${k}`)}</option>
@@ -333,7 +338,7 @@ export function ProjectWizardPage() {
                   <DecimalInput label={t('project.wizard.height')} value={room.height_m} onValueChange={(height_m) => updateRoom(setWizard, wizard, room.id, { height_m })} />
                 </div>
                 <p className="text-sm text-muted">
-                  {t('project.wizard.area')}: {calcArea(room.length_m ?? 0, room.width_m ?? 0)} м² · {t('project.wizard.perimeter')}: {calcPerimeter(room.length_m ?? 0, room.width_m ?? 0)} м
+                  {t('project.wizard.area')}: {calcArea(room.length_m ?? 0, room.width_m ?? 0)} {formatUnit('m2')} · {t('project.wizard.perimeter')}: {calcPerimeter(room.length_m ?? 0, room.width_m ?? 0)} {formatUnit('m')}
                 </p>
                 <Input label={t('project.wizard.wallMaterial')} value={room.wall_material} onChange={(e) => updateRoom(setWizard, wizard, room.id, { wall_material: e.target.value })} />
                 <Input label={t('project.wizard.ceilingMaterial')} value={room.ceiling_material} onChange={(e) => updateRoom(setWizard, wizard, room.id, { ceiling_material: e.target.value })} />
@@ -374,20 +379,20 @@ export function ProjectWizardPage() {
             ) : (
               wizard.points.map((point) => (
                 <Card key={point.id} className="space-y-3">
-                  <div className="flex justify-between">
-                    <h3 className="font-bold">{DEVICE_TYPES.find((d) => d.code === point.deviceCode)?.nameRu}</h3>
+                  <div className="flex min-w-0 justify-between gap-2">
+                    <h3 className="min-w-0 break-words font-bold">{deviceLabel(point.deviceCode)}</h3>
                     <Button variant="ghost" size="icon" onClick={() => setWizard({ points: wizard.points.filter((p) => p.id !== point.id) })}>
                       <Trash2 size={16} />
                     </Button>
                   </div>
                   <Select label={t('project.rooms')} value={point.roomId} onChange={(e) => updatePoint(setWizard, wizard, point.id, { roomId: e.target.value })}>
                     {wizard.rooms.map((r) => (
-                      <option key={r.id} value={r.id}>{r.name}</option>
+                      <option key={r.id} value={r.id}>{translateRoomName(t, r.name, r.room_type)}</option>
                     ))}
                   </Select>
                   <Select label={t('project.wizard.addPoint')} value={point.deviceCode} onChange={(e) => updatePoint(setWizard, wizard, point.id, { deviceCode: e.target.value })}>
                     {DEVICE_TYPES.map((d) => (
-                      <option key={d.code} value={d.code}>{d.nameRu}</option>
+                      <option key={d.code} value={d.code}>{deviceLabel(d.code)}</option>
                     ))}
                   </Select>
                   <div className="grid grid-cols-2 gap-2">
@@ -486,13 +491,18 @@ export function ProjectWizardPage() {
               <ul className="divide-y divide-black/5">
                 {calc.materials.map((m) => (
                   <li key={m.id} className="px-4 py-3">
-                    <p className="font-bold leading-snug text-text break-words">{m.name}</p>
+                    <p className="break-words font-bold leading-snug text-text">
+                      {translateMaterialName(t, { name: m.name, ruleId: m.ruleId || m.id })}
+                    </p>
                     <div className="mt-1 flex items-baseline justify-between gap-3">
                       <p className="text-sm text-muted">
-                        {m.quantity} {m.unit}
+                        {m.quantity} {formatUnit(m.unit)}
                       </p>
                       <p className="shrink-0 text-sm font-semibold text-muted">{formatMoney(m.totalPrice)}</p>
                     </div>
+                    {m.warning ? (
+                      <p className="mt-1 text-xs text-warning-text">{translateWarning(t, m.warning)}</p>
+                    ) : null}
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
                       <button
                         type="button"
@@ -534,8 +544,8 @@ export function ProjectWizardPage() {
 
       <ConfirmDialog
         open={leaveOpen}
-        title="Выйти из мастера?"
-        description="Черновик сохранён локально"
+        title={t('project.wizard.leaveTitle')}
+        description={t('project.wizard.leaveDescription')}
         confirmLabel={t('common.confirm')}
         cancelLabel={t('common.cancel')}
         onCancel={() => setLeaveOpen(false)}
@@ -547,9 +557,9 @@ export function ProjectWizardPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    <div className="min-w-0">
       <p className="text-xs text-muted">{label}</p>
-      <p className="text-lg font-extrabold break-words">{value}</p>
+      <p className="break-words text-lg font-extrabold">{value}</p>
     </div>
   )
 }

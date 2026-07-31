@@ -32,7 +32,7 @@ import {
   DEVICE_TYPES,
   type CalcParams,
 } from '@/features/calculation-engine'
-import { saveOfflineDraft, loadOfflineDraft } from '@/features/offline/db'
+import { saveOfflineDraft, loadOfflineDraft, clearOfflineDraft } from '@/features/offline/db'
 import {
   calculateForProject,
   materialsFromCalc,
@@ -51,6 +51,9 @@ export interface WizardParams {
 }
 
 export interface WizardDraft {
+  /** Temporary draft id — scopes persisted wizard state per session */
+  draftId: string
+  /** 0-based step index; UI shows step+1. Order: Client→Object→Rooms→Points→Params→Result */
   step: number
   clientMode: 'existing' | 'new'
   clientId: string | null
@@ -89,6 +92,28 @@ export interface WizardDraft {
   params: WizardParams
 }
 
+export function wizardStorageKey(userId: string, draftId: string) {
+  return `simchi:wizard:${userId}:${draftId}`
+}
+
+export function wizardActiveKey(userId: string) {
+  return `simchi:wizard:active:${userId}`
+}
+
+export function isWizardDirty(w: WizardDraft): boolean {
+  return (
+    w.step > 0 ||
+    w.rooms.length > 0 ||
+    w.points.length > 0 ||
+    Boolean(w.clientId) ||
+    Boolean(w.client.full_name.trim()) ||
+    Boolean(w.client.phone.trim()) ||
+    Boolean(w.project.title.trim()) ||
+    Boolean(w.project.address.trim()) ||
+    Boolean(w.project.note.trim())
+  )
+}
+
 /** Coerce draft params to calculation engine params (null → safe defaults). */
 export function toCalcParams(params: WizardParams): CalcParams {
   return {
@@ -103,6 +128,7 @@ export function toCalcParams(params: WizardParams): CalcParams {
 }
 
 const emptyWizard = (): WizardDraft => ({
+  draftId: crypto.randomUUID(),
   step: 0,
   clientMode: 'new',
   clientId: null,
@@ -110,7 +136,7 @@ const emptyWizard = (): WizardDraft => ({
   project: {
     title: '',
     address: '',
-    city: 'Ташкент',
+    city: 'Tashkent',
     object_type: 'apartment',
     work_kind: 'renovation',
     floors_count: 1,
@@ -129,6 +155,14 @@ const emptyWizard = (): WizardDraft => ({
     worksBasePrice: 0,
   },
 })
+
+function persistWizardDraft(userId: string | null | undefined, wizard: WizardDraft) {
+  const uid = userId || 'guest'
+  void saveOfflineDraft(wizardStorageKey(uid, wizard.draftId), wizard)
+  void saveOfflineDraft(wizardActiveKey(uid), { draftId: wizard.draftId })
+  // Legacy key kept in sync for older restores
+  void saveOfflineDraft('wizard', wizard)
+}
 
 interface AppDataState {
   clients: Client[]
@@ -157,7 +191,11 @@ interface AppDataState {
   ensureDemoSeed: () => void
   setWizard: (patch: Partial<WizardDraft> | ((w: WizardDraft) => WizardDraft)) => void
   resetWizard: () => void
-  restoreWizardDraft: () => Promise<void>
+  startFreshWizard: () => void
+  continueWizardDraft: () => void
+  hasUnfinishedWizard: () => boolean
+  restoreWizardDraft: (userId?: string | null) => Promise<void>
+  clearWizardSession: (userId?: string | null) => void
   saveWizardProject: (electricianId: string) => Promise<string>
   upsertClient: (client: Omit<Client, 'created_at' | 'updated_at' | 'deleted_at'> & Partial<Client>) => void
   deleteClient: (id: string) => void
@@ -324,20 +362,77 @@ export const useAppDataStore = create<AppDataState>()(
       setWizard: (patch) =>
         set((s) => {
           const next = typeof patch === 'function' ? patch(s.wizard) : { ...s.wizard, ...patch }
-          void saveOfflineDraft('wizard', next)
+          // Prefer electrician id from first project or guest — auth id passed via persistWizardDraft caller context
+          const userId =
+            s.projects.find((p) => p.electrician_id)?.electrician_id ??
+            s.clients.find((c) => c.electrician_id)?.electrician_id ??
+            'guest'
+          persistWizardDraft(userId, next)
           return { wizard: next }
         }),
 
       resetWizard: () => {
-        void saveOfflineDraft('wizard', emptyWizard())
-        set({ wizard: emptyWizard() })
+        const fresh = emptyWizard()
+        void saveOfflineDraft('wizard', fresh)
+        set({ wizard: fresh })
       },
 
-      restoreWizardDraft: async () => {
-        const draft = await loadOfflineDraft<WizardDraft>('wizard')
-        if (draft && (draft.rooms.length > 0 || draft.client.full_name || draft.project.title)) {
-          set({ wizard: draft })
+      startFreshWizard: () => {
+        const state = get()
+        const userId =
+          state.projects.find((p) => p.electrician_id)?.electrician_id ??
+          state.clients.find((c) => c.electrician_id)?.electrician_id ??
+          'guest'
+        const prev = state.wizard
+        // Clear previous session storage only — do not touch completed projects
+        if (prev?.draftId) {
+          void clearOfflineDraft(wizardStorageKey(userId, prev.draftId))
         }
+        void clearOfflineDraft(wizardActiveKey(userId))
+        void clearOfflineDraft('wizard')
+        const fresh = emptyWizard()
+        persistWizardDraft(userId, fresh)
+        set({ wizard: fresh })
+      },
+
+      continueWizardDraft: () => {
+        // Keep current in-memory draft (already restored from persist); ensure step stays as saved
+        const w = get().wizard
+        if (!w.draftId) {
+          set({ wizard: { ...w, draftId: crypto.randomUUID() } })
+        }
+      },
+
+      hasUnfinishedWizard: () => isWizardDirty(get().wizard),
+
+      restoreWizardDraft: async (userId) => {
+        const uid = userId || 'guest'
+        const active = await loadOfflineDraft<{ draftId: string }>(wizardActiveKey(uid))
+        let draft: WizardDraft | null = null
+        if (active?.draftId) {
+          draft = await loadOfflineDraft<WizardDraft>(wizardStorageKey(uid, active.draftId))
+        }
+        if (!draft) {
+          draft = await loadOfflineDraft<WizardDraft>('wizard')
+        }
+        if (draft && isWizardDirty(draft)) {
+          const normalized: WizardDraft = {
+            ...emptyWizard(),
+            ...draft,
+            draftId: draft.draftId || crypto.randomUUID(),
+            step: Math.min(Math.max(draft.step ?? 0, 0), 5),
+          }
+          set({ wizard: normalized })
+        }
+      },
+
+      clearWizardSession: (userId) => {
+        const uid = userId || 'guest'
+        const prev = get().wizard
+        if (prev?.draftId) void clearOfflineDraft(wizardStorageKey(uid, prev.draftId))
+        void clearOfflineDraft(wizardActiveKey(uid))
+        void clearOfflineDraft('wizard')
+        set({ wizard: emptyWizard() })
       },
 
       saveWizardProject: async (electricianId) => {
@@ -403,7 +498,7 @@ export const useAppDataStore = create<AppDataState>()(
           id: projectId,
           electrician_id: electricianId,
           client_id: clientId,
-          title: w.project.title || `Проект — ${w.client.full_name || 'без имени'}`,
+          title: w.project.title || `Project — ${w.client.full_name || 'unnamed'}`,
           address: w.project.address,
           city: w.project.city,
           object_type: w.project.object_type,
@@ -470,15 +565,19 @@ export const useAppDataStore = create<AppDataState>()(
           deleted_at: null,
         }))
 
+        const fresh = emptyWizard()
         set((s) => ({
           projects: [project, ...s.projects],
           rooms: { ...s.rooms, [projectId]: rooms },
           points: { ...s.points, [projectId]: points },
           materials: { ...s.materials, [projectId]: materials },
           works: { ...s.works, [projectId]: works },
-          wizard: emptyWizard(),
+          wizard: fresh,
         }))
-        void saveOfflineDraft('wizard', emptyWizard())
+        void clearOfflineDraft(wizardStorageKey(electricianId, w.draftId || 'legacy'))
+        void clearOfflineDraft(wizardActiveKey(electricianId))
+        void clearOfflineDraft('wizard')
+        persistWizardDraft(electricianId, fresh)
 
         if (isSupabaseConfigured) {
           const { clients: _c, ...projectRow } = project
@@ -776,7 +875,7 @@ export const useAppDataStore = create<AppDataState>()(
     }),
     {
       name: 'simchi-app-data',
-      version: 3,
+      version: 4,
       migrate: (persisted, fromVersion) => {
         const state = (persisted ?? {}) as Partial<{
           clients: typeof DEMO_CLIENTS
@@ -790,12 +889,27 @@ export const useAppDataStore = create<AppDataState>()(
           publicEstimates: AppDataState['publicEstimates']
         }>
         let wizard = state.wizard ?? emptyWizard()
-        // v2→v3: client step moved from first (0) to last (5)
-        if ((fromVersion ?? 0) < 3 && wizard) {
-          const oldToNew = [5, 0, 1, 2, 3, 4] as const
+        const ver = fromVersion ?? 0
+
+        // v2 was Client-first (0). v3 moved Client to last (5).
+        // v4 restores Client-first: Client→Object→Rooms→Points→Params→Result
+        if (ver < 3 && wizard) {
+          // Already client-first in v2 — keep step, just ensure draftId
+        } else if (ver === 3 && wizard) {
+          // v3 indices: Object(0), Rooms(1), Points(2), Params(3), Result(4), Client(5)
+          // v4 indices: Client(0), Object(1), Rooms(2), Points(3), Params(4), Result(5)
+          const v3toV4 = [1, 2, 3, 4, 5, 0] as const
           const oldStep = Math.min(Math.max(wizard.step ?? 0, 0), 5)
-          wizard = { ...wizard, step: oldToNew[oldStep] }
+          wizard = { ...wizard, step: v3toV4[oldStep] }
         }
+
+        wizard = {
+          ...emptyWizard(),
+          ...wizard,
+          draftId: wizard.draftId || crypto.randomUUID(),
+          step: Math.min(Math.max(wizard.step ?? 0, 0), 5),
+        }
+
         return {
           clients: state.clients ?? DEMO_CLIENTS,
           projects: state.projects ?? DEMO_PROJECTS,

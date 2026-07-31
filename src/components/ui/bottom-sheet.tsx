@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -15,6 +16,7 @@ export function BottomSheet({
   children: ReactNode
   className?: string
 }) {
+  const { t } = useTranslation()
   const sheetRef = useRef<HTMLDivElement>(null)
   const startY = useRef<number | null>(null)
   const [dragY, setDragY] = useState(0)
@@ -43,7 +45,7 @@ export function BottomSheet({
     <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center">
       <button
         type="button"
-        aria-label="Закрыть"
+        aria-label={t('common.close')}
         className="absolute inset-0 bg-text/35 backdrop-blur-sm"
         onClick={onClose}
       />
@@ -80,7 +82,7 @@ export function BottomSheet({
             type="button"
             onClick={onClose}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary"
-            aria-label="Закрыть"
+            aria-label={t('common.close')}
           >
             <X size={18} />
           </button>

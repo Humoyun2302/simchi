@@ -56,11 +56,11 @@ export function ClientDetailPage() {
               <Button
                 onClick={() => {
                   if (!form.full_name.trim()) {
-                    push('Укажите имя и телефон', 'error')
+                    push(t('common.required'), 'error')
                     return
                   }
                   if (!isValidUzbekPhone(form.phone)) {
-                    push('Введите полный номер телефона', 'error')
+                    push(t('validation.phoneComplete'), 'error')
                     return
                   }
                   upsertClient({
@@ -120,7 +120,7 @@ export function ClientDetailPage() {
       <ConfirmDialog
         open={confirmDelete}
         title={t('common.delete')}
-        description="Клиент будет удалён. Проекты останутся без привязки."
+        description={t('clients.deleteDescription')}
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
         onCancel={() => setConfirmDelete(false)}
