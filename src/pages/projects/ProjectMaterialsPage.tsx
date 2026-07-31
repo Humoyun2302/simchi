@@ -145,7 +145,7 @@ export function ProjectMaterialsPage() {
         <h1 className="text-3xl font-extrabold">{t('project.materials')}</h1>
         <Button variant="outline" size="sm" onClick={() => recalculateProject(id)}>
           <RefreshCw size={16} />
-          Пересчитать
+          {t('estimate.recalculate')}
         </Button>
       </div>
       <Card className="bg-warning/40">

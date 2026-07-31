@@ -55,11 +55,11 @@ export function ClientsPage() {
             onClick={() => {
               if (!profile) return
               if (!form.full_name.trim()) {
-                push('Укажите имя и телефон', 'error')
+                push(t('common.required'), 'error')
                 return
               }
               if (!isValidUzbekPhone(form.phone)) {
-                setPhoneError('Введите полный номер телефона')
+                setPhoneError(t('validation.phoneComplete'))
                 return
               }
               const phone = normalizeUzbekPhone(form.phone)!

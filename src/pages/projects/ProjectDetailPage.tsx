@@ -114,10 +114,10 @@ export function ProjectDetailPage() {
           const url = `${window.location.origin}/estimate/public/${token}`
           setLink(url)
           const ok = await copyToClipboard(url)
-          push(ok ? 'Ссылка скопирована' : 'Ссылка создана — скопируйте вручную', ok ? 'success' : 'info')
+          push(ok ? t('estimate.linkCopied') : t('estimate.linkCreatedManual'), ok ? 'success' : 'info')
         }}
       >
-        Публичная ссылка на смету
+        {t('estimate.publicLink')}
       </Button>
       {link ? <p className="break-all text-xs text-muted">{link}</p> : null}
 
@@ -129,7 +129,7 @@ export function ProjectDetailPage() {
       <ConfirmDialog
         open={confirmDelete}
         title={t('common.delete')}
-        description="Проект будет удалён вместе с помещениями и материалами"
+        description={t('project.deleteDescription')}
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
         danger

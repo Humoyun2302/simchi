@@ -66,7 +66,7 @@ export function ProjectWorksPage() {
       <h1 className="text-3xl font-extrabold">{t('project.works')}</h1>
       {works.length === 0 ? (
         <Button variant="secondary" className="w-full" onClick={seedDefaults}>
-          Заполнить типовыми работами
+          {t('project.fillTypicalWorks')}
         </Button>
       ) : null}
       {works.map((work) => (
@@ -103,7 +103,7 @@ export function ProjectWorksPage() {
               }}
             />
             <IntegerInput
-              label="Цена"
+              label={t('project.workPrice')}
               value={work.unit_price}
               onValueChange={(unit_price) => {
                 const priceVal = unit_price ?? 0
@@ -127,8 +127,8 @@ export function ProjectWorksPage() {
         </Card>
       ))}
       <Card className="space-y-3">
-        <Input label="Своя работа" value={name} onChange={(e) => setName(e.target.value)} />
-        <IntegerInput label="Цена" value={price} onValueChange={setPrice} />
+        <Input label={t('project.customWork')} value={name} onChange={(e) => setName(e.target.value)} />
+        <IntegerInput label={t('project.workPrice')} value={price} onValueChange={setPrice} />
         <Button
           className="w-full"
           onClick={() => {
@@ -140,7 +140,7 @@ export function ProjectWorksPage() {
                 id: crypto.randomUUID(),
                 project_id: id,
                 work_price_item_id: null,
-                name: name || 'Другая работа',
+                name: name || t('project.otherWork'),
                 work_type: 'custom',
                 quantity: 1,
                 unit_price: unit,

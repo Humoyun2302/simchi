@@ -77,8 +77,8 @@ export function ProjectEstimatePage() {
         <h3 className="font-bold">{t('project.materials')}</h3>
         {materials.length === 0 ? (
           <div className="space-y-2">
-            <p className="text-sm text-muted">Нет позиций — пересчитайте проект</p>
-            <Button variant="secondary" onClick={() => recalculateProject(id)}>Пересчитать</Button>
+            <p className="text-sm text-muted">{t('estimate.noItems')}</p>
+            <Button variant="secondary" onClick={() => recalculateProject(id)}>{t('estimate.recalculate')}</Button>
           </div>
         ) : null}
         {materials.map((m) => (
@@ -120,10 +120,10 @@ export function ProjectEstimatePage() {
           const url = `${window.location.origin}/estimate/public/${token}`
           const ok = await copyToClipboard(url)
           updateProject(project.id, { status: 'sent' })
-          push(ok ? 'Ссылка скопирована' : `Ссылка: ${url}`, ok ? 'success' : 'info')
+          push(ok ? t('estimate.linkCopied') : t('estimate.linkFallback', { url }), ok ? 'success' : 'info')
         }}
       >
-        Отправить клиенту
+        {t('estimate.sendToClient')}
       </Button>
     </div>
   )

@@ -36,21 +36,21 @@ export function OrderDetailPage() {
         <Badge tone="primary">{t(`orders.statuses.${order.status}`)}</Badge>
       </div>
       <Card className="grid gap-3 sm:grid-cols-2">
-        <Info label="Дата" value={formatDate(order.created_at)} />
-        <Info label="Проект" value={project?.title ?? '—'} />
-        <Info label="Подытог" value={formatMoney(order.subtotal)} />
+        <Info label={t('orders.date')} value={formatDate(order.created_at)} />
+        <Info label={t('orders.project')} value={project?.title ?? '—'} />
+        <Info label={t('orders.subtotal')} value={formatMoney(order.subtotal)} />
         <Info label={t('suppliers.discount')} value={formatMoney(order.discount_total)} />
         <Info label={t('suppliers.delivery')} value={formatMoney(order.delivery_total)} />
         <Info label={t('suppliers.total')} value={formatMoney(order.grand_total)} />
       </Card>
       {order.notes ? (
         <Card>
-          <p className="text-xs text-muted">Комментарий</p>
+          <p className="text-xs text-muted">{t('project.wizard.comment')}</p>
           <p className="font-semibold">{order.notes}</p>
         </Card>
       ) : null}
       <Card className="space-y-2">
-        <h3 className="font-bold">Позиции материалов проекта</h3>
+        <h3 className="font-bold">{t('orders.materialItems')}</h3>
         {materials.length === 0 ? <p className="text-sm text-muted">—</p> : null}
         {materials.slice(0, 12).map((m) => (
           <div key={m.id} className="flex justify-between gap-3 text-sm">
@@ -60,7 +60,7 @@ export function OrderDetailPage() {
         ))}
       </Card>
       <Card className="space-y-3">
-        <p className="font-semibold">Статус заказа</p>
+        <p className="font-semibold">{t('orders.statusLabel')}</p>
         <div className="flex flex-wrap gap-2">
           {ELECTRICIAN_ACTIONS.map((st) => (
             <Button
@@ -78,7 +78,7 @@ export function OrderDetailPage() {
         </div>
       </Card>
       <Card className="bg-primary-soft/50">
-        <p className="text-sm text-muted">Комиссия SIMCHI не отображается клиенту в смете.</p>
+        <p className="text-sm text-muted">{t('orders.commissionNote')}</p>
       </Card>
     </div>
   )

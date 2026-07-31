@@ -67,12 +67,12 @@ export function ProjectSuppliersPage() {
               <h3 className="text-lg font-bold">{o.supplier.name}</h3>
               <p className="text-sm text-muted">{o.supplier.city} · ★ {o.supplier.rating}</p>
             </div>
-            {o.missing > 0 ? <Badge tone="warning">{t('suppliers.missing')}: {o.missing}</Badge> : <Badge tone="success">В наличии</Badge>}
+            {o.missing > 0 ? <Badge tone="warning">{t('suppliers.missing')}: {o.missing}</Badge> : <Badge tone="success">{t('suppliers.inStock')}</Badge>}
           </div>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <p>{t('suppliers.discount')}: {o.supplier.electrician_discount_percent}%</p>
             <p>{t('suppliers.delivery')}: {formatMoney(o.delivery)}</p>
-            <p>Срок: {o.days} дн.</p>
+            <p>{t('suppliers.deliveryTerm', { days: o.days })}</p>
             <p className="font-extrabold text-primary">{t('suppliers.total')}: {formatMoney(o.total)}</p>
           </div>
           <Button

@@ -38,7 +38,7 @@ export function ProjectPointsPage() {
       <h1 className="text-3xl font-extrabold">{t('project.wizard.stepPoints')}</h1>
       {rooms.length === 0 ? (
         <Card>
-          <p className="text-muted">Сначала добавьте помещения</p>
+          <p className="text-muted">{t('project.addRoomsFirst')}</p>
           <Button className="mt-3" variant="secondary" onClick={() => navigate(`/projects/${id}/rooms`)}>
             {t('project.rooms')}
           </Button>

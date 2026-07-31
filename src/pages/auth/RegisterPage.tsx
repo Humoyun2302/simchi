@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { z } from 'zod'
@@ -14,19 +14,17 @@ import { useAuthStore } from '@/stores/auth-store'
 import { useToastStore } from '@/stores/toast-store'
 import { isValidUzbekPhone, normalizeUzbekPhone } from '@/lib/phone'
 
-const schema = z.object({
-  full_name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(6),
-  phone: z.string().refine(isValidUzbekPhone, 'Введите полный номер телефона'),
-  city: z.string().min(2),
-  company_name: z.string().optional(),
-})
-
-type FormValues = z.infer<typeof schema>
+type FormValues = {
+  full_name: string
+  email: string
+  password: string
+  phone: string
+  city: string
+  company_name?: string
+}
 
 export function RegisterPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const signUp = useAuthStore((s) => s.signUp)
   const enterDemo = useAuthStore((s) => s.enterDemo)
@@ -34,8 +32,23 @@ export function RegisterPage() {
   const push = useToastStore((s) => s.push)
   const [error, setError] = useState('')
 
+  const schema = useMemo(
+    () =>
+      z.object({
+        full_name: z.string().min(2),
+        email: z.string().email(),
+        password: z.string().min(6),
+        phone: z.string().refine(isValidUzbekPhone, () => ({
+          message: t('validation.phoneComplete'),
+        })),
+        city: z.string().min(2),
+        company_name: z.string().optional(),
+      }),
+    [t, i18n.language],
+  )
+
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: (values, context, options) => zodResolver(schema)(values, context, options),
     mode: 'onBlur',
     defaultValues: {
       full_name: '',
@@ -65,7 +78,7 @@ export function RegisterPage() {
       <Card>
         <h1 className="text-2xl font-extrabold">{t('auth.registerTitle')}</h1>
         <p className="mt-1 text-sm text-muted">{t('auth.electricianOnly')}</p>
-        <p className="mt-2 text-sm text-muted">Регистрация по желанию — приложение доступно и без аккаунта.</p>
+        <p className="mt-2 text-sm text-muted">{t('auth.registerOptional')}</p>
         <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit}>
           <Input label={t('auth.fullName')} error={form.formState.errors.full_name?.message} {...form.register('full_name')} />
           <Input label={t('auth.email')} type="email" error={form.formState.errors.email?.message} {...form.register('email')} />
@@ -107,7 +120,7 @@ export function RegisterPage() {
           }}
         >
           <ArrowLeft size={18} />
-          Продолжить без регистрации
+          {t('auth.continueWithoutRegister')}
         </Button>
       </Card>
     </div>

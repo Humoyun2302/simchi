@@ -32,7 +32,8 @@ export function ResetPasswordPage() {
       setSent(true)
       push(t('auth.resetSent'), 'success')
     } catch (e) {
-      push(e instanceof Error ? e.message : t('common.error'), 'error')
+      const message = e instanceof Error ? e.message : t('auth.resetUnavailable')
+      push(message || t('auth.resetUnavailable'), 'error')
     }
   })
 
@@ -57,7 +58,7 @@ export function ResetPasswordPage() {
         </Link>
         <div className="mt-3">
           <Link to="/" className="text-sm font-semibold text-muted">
-            Продолжить без входа
+            {t('auth.continueWithoutLogin')}
           </Link>
         </div>
       </Card>
