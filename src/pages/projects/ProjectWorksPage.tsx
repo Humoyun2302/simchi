@@ -72,7 +72,7 @@ export function ProjectWorksPage() {
       {works.map((work) => (
         <Card key={work.id} className="space-y-3">
           <div className="flex justify-between gap-2">
-            <p className="font-bold">{work.name}</p>
+            <p className="font-bold">{t(`project.workTypes.${work.work_type}`, { defaultValue: work.name })}</p>
             <Button
               variant="ghost"
               size="icon"

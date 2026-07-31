@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import i18n from '@/i18n'
 
 interface Props {
   children: ReactNode
@@ -45,16 +46,16 @@ class ErrorBoundaryInner extends Component<Props, State> {
       return (
         <div className="mx-auto flex min-h-dvh max-w-lg items-center px-4 py-8">
           <Card className="w-full space-y-4">
-            <h2 className="text-xl font-extrabold">{this.props.fallbackTitle ?? 'Что-то пошло не так'}</h2>
+            <h2 className="text-xl font-extrabold">{this.props.fallbackTitle ?? i18n.t('errors.somethingWrong')}</h2>
             <p className="text-sm text-muted">
-              Страница не загрузилась. Можно повторить или сбросить локальные данные и открыть главную.
+              {i18n.t('errors.pageFailed')}
             </p>
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" onClick={this.reset}>
-                Повторить
+                {i18n.t('errors.retry')}
               </Button>
               <Button variant="outline" onClick={this.goHome}>
-                На главную
+                {i18n.t('errors.goHome')}
               </Button>
             </div>
           </Card>

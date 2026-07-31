@@ -36,6 +36,11 @@ export const ru = {
     fillRequired: 'Заполните обязательные поля шага',
     meters: 'м',
     squareMeters: 'м²',
+    close: 'Закрыть',
+    refresh: 'Обновить',
+    description: 'Описание',
+    phone: 'Телефон',
+    price: 'Цена',
   },
   nav: {
     home: 'Главная',
@@ -262,6 +267,13 @@ export const ru = {
       consumables: 'Расходники',
       other: 'Прочее',
     },
+    workTypes: {
+      socket_install: 'Установка розетки',
+      switch_install: 'Установка выключателя',
+      light_install: 'Установка светильника',
+      cable_laying: 'Прокладка кабеля',
+      panel_assembly: 'Сборка щита',
+    },
   },
   calc: {
     disclaimer:
@@ -281,6 +293,7 @@ export const ru = {
     finalQty: 'Итоговое количество',
     manualOverride: 'Ручная корректировка',
     inputs: 'Исходные данные',
+    explanationUnavailable: 'Подробное объяснение для этой позиции пока недоступно.',
   },
   clients: {
     title: 'Клиенты',
@@ -304,6 +317,7 @@ export const ru = {
     total: 'Итого',
     inStock: 'В наличии',
     deliveryTerm: 'Срок: {{days}} дн.',
+    minOrder: 'мин. заказ',
   },
   orders: {
     title: 'Заказы',
@@ -393,6 +407,20 @@ export const ru = {
     ledger: 'Журнал комиссий',
     stats: 'Статистика',
     audit: 'Журнал аудита',
+    name: 'Имя',
+    email: 'Email',
+    role: 'Роль',
+    city: 'Город',
+    status: 'Статус',
+    demoRolesHint: 'В демо роли меняются локально. В production — через Supabase profiles.',
+    catalogManaged: 'Canonical products / supplier offers управляются в БД.',
+    catalogMvpHint: 'В MVP доступен справочник правил и демо-каталог на /catalog.',
+    commissionPercent: 'Комиссия SIMCHI %',
+    total: 'Итого',
+    projects: 'Проекты',
+    auditEmpty: 'Нажмите «Обновить», чтобы зафиксировать текущее состояние.',
+    auditOrdersView: 'Просмотр заказов: {{count}}',
+    auditProjectsCount: 'Проектов в системе: {{count}}',
   },
   supplier: {
     title: 'Кабинет поставщика',
@@ -404,6 +432,10 @@ export const ru = {
     sales: 'Продажи',
     commission: 'Комиссия',
     returns: 'Возвраты',
+    branchName: 'Название филиала',
+    downloadCsvTemplate: 'Скачать шаблон CSV',
+    importedCount: 'Импортировано: {{count}}',
+    stock: 'Остаток',
   },
   offline: {
     pageTitle: 'Нет соединения',
@@ -412,6 +444,10 @@ export const ru = {
   },
   errors: {
     appCrash: 'SIMCHI не загрузился',
+    somethingWrong: 'Что-то пошло не так',
+    pageFailed: 'Страница не загрузилась. Можно повторить или сбросить локальные данные и открыть главную.',
+    retry: 'Повторить',
+    goHome: 'На главную',
   },
 } as const
 

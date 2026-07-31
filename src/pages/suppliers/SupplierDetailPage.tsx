@@ -23,7 +23,7 @@ export function SupplierDetailPage() {
         {supplier.telegram ? <p>{supplier.telegram}</p> : null}
         <p className="text-sm text-muted">{supplier.delivery_terms}</p>
         <p className="font-semibold">
-          {t('suppliers.discount')}: {supplier.electrician_discount_percent}% · мин. заказ {formatMoney(supplier.min_order_amount)}
+          {t('suppliers.discount')}: {supplier.electrician_discount_percent}% · {t('suppliers.minOrder')} {formatMoney(supplier.min_order_amount)}
         </p>
       </Card>
     </div>

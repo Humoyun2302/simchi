@@ -38,6 +38,11 @@ export const uz: TranslationSchema = {
     fillRequired: 'Ushbu bosqichning majburiy maydonlarini toʻldiring',
     meters: 'm',
     squareMeters: 'm²',
+    close: 'Yopish',
+    refresh: 'Yangilash',
+    description: 'Tavsif',
+    phone: 'Telefon',
+    price: 'Narx',
   },
   nav: {
     home: 'Bosh sahifa',
@@ -264,6 +269,13 @@ export const uz: TranslationSchema = {
       consumables: 'Sarflanadigan materiallar',
       other: 'Boshqa',
     },
+    workTypes: {
+      socket_install: 'Rozetka oʻrnatish',
+      switch_install: 'Oʻchirgich oʻrnatish',
+      light_install: 'Chiroq oʻrnatish',
+      cable_laying: 'Kabel yotqizish',
+      panel_assembly: 'Shield yigʻish',
+    },
   },
   calc: {
     disclaimer:
@@ -283,6 +295,7 @@ export const uz: TranslationSchema = {
     finalQty: 'Yakuniy miqdor',
     manualOverride: 'Qoʻlda tuzatish',
     inputs: 'Boshlangʻich maʼlumotlar',
+    explanationUnavailable: 'Ushbu pozitsiya uchun batafsil tushuntirish hozircha mavjud emas.',
   },
   clients: {
     title: 'Mijozlar',
@@ -306,6 +319,7 @@ export const uz: TranslationSchema = {
     total: 'Jami',
     inStock: 'Omborda bor',
     deliveryTerm: 'Muddat: {{days}} kun',
+    minOrder: 'min. buyurtma',
   },
   orders: {
     title: 'Buyurtmalar',
@@ -395,6 +409,20 @@ export const uz: TranslationSchema = {
     ledger: 'Komissiyalar jurnali',
     stats: 'Statistika',
     audit: 'Audit jurnali',
+    name: 'Ism',
+    email: 'Email',
+    role: 'Rol',
+    city: 'Shahar',
+    status: 'Holat',
+    demoRolesHint: 'Demoda rollar mahalliy o‘zgaradi. Productionda — Supabase profiles orqali.',
+    catalogManaged: 'Canonical products / supplier offers maʼlumotlar bazasida boshqariladi.',
+    catalogMvpHint: 'MVPda qoidalar maʼlumotnomasi va demo-katalog /catalog da mavjud.',
+    commissionPercent: 'SIMCHI komissiyasi %',
+    total: 'Jami',
+    projects: 'Loyihalar',
+    auditEmpty: 'Joriy holatni qayd etish uchun «Yangilash» ni bosing.',
+    auditOrdersView: 'Buyurtmalar koʻrilgan: {{count}}',
+    auditProjectsCount: 'Tizimdagi loyihalar: {{count}}',
   },
   supplier: {
     title: 'Yetkazib beruvchi kabineti',
@@ -406,6 +434,10 @@ export const uz: TranslationSchema = {
     sales: 'Sotuvlar',
     commission: 'Komissiya',
     returns: 'Qaytarishlar',
+    branchName: 'Filial nomi',
+    downloadCsvTemplate: 'CSV shablonini yuklab olish',
+    importedCount: 'Import qilindi: {{count}}',
+    stock: 'Qoldiq',
   },
   offline: {
     pageTitle: 'Aloqa yoʻq',
@@ -414,5 +446,9 @@ export const uz: TranslationSchema = {
   },
   errors: {
     appCrash: 'SIMCHI yuklanmadi',
+    somethingWrong: 'Nimadir notoʻgʻri ketdi',
+    pageFailed: 'Sahifa yuklanmadi. Qayta urinib koʻrishingiz yoki mahalliy maʼlumotlarni tozalab bosh sahifaga oʻtishingiz mumkin.',
+    retry: 'Qayta urinish',
+    goHome: 'Bosh sahifaga',
   },
 }

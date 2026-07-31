@@ -38,6 +38,11 @@ export const en: TranslationSchema = {
     fillRequired: 'Please fill in the required fields for this step',
     meters: 'm',
     squareMeters: 'm²',
+    close: 'Close',
+    refresh: 'Refresh',
+    description: 'Description',
+    phone: 'Phone',
+    price: 'Price',
   },
   nav: {
     home: 'Home',
@@ -264,6 +269,13 @@ export const en: TranslationSchema = {
       consumables: 'Consumables',
       other: 'Other',
     },
+    workTypes: {
+      socket_install: 'Socket installation',
+      switch_install: 'Switch installation',
+      light_install: 'Light fixture installation',
+      cable_laying: 'Cable laying',
+      panel_assembly: 'Panel assembly',
+    },
   },
   calc: {
     disclaimer:
@@ -283,6 +295,7 @@ export const en: TranslationSchema = {
     finalQty: 'Final quantity',
     manualOverride: 'Manual override',
     inputs: 'Inputs',
+    explanationUnavailable: 'A detailed explanation for this item is not available yet.',
   },
   clients: {
     title: 'Clients',
@@ -306,6 +319,7 @@ export const en: TranslationSchema = {
     total: 'Total',
     inStock: 'In stock',
     deliveryTerm: 'Lead time: {{days}} d.',
+    minOrder: 'min. order',
   },
   orders: {
     title: 'Orders',
@@ -395,6 +409,20 @@ export const en: TranslationSchema = {
     ledger: 'Commission ledger',
     stats: 'Statistics',
     audit: 'Audit log',
+    name: 'Name',
+    email: 'Email',
+    role: 'Role',
+    city: 'City',
+    status: 'Status',
+    demoRolesHint: 'In demo, roles change locally. In production — via Supabase profiles.',
+    catalogManaged: 'Canonical products / supplier offers are managed in the database.',
+    catalogMvpHint: 'In the MVP, the rules reference and demo catalog are available at /catalog.',
+    commissionPercent: 'SIMCHI commission %',
+    total: 'Total',
+    projects: 'Projects',
+    auditEmpty: 'Click “Refresh” to capture the current state.',
+    auditOrdersView: 'Orders viewed: {{count}}',
+    auditProjectsCount: 'Projects in the system: {{count}}',
   },
   supplier: {
     title: 'Supplier cabinet',
@@ -406,6 +434,10 @@ export const en: TranslationSchema = {
     sales: 'Sales',
     commission: 'Commission',
     returns: 'Returns',
+    branchName: 'Branch name',
+    downloadCsvTemplate: 'Download CSV template',
+    importedCount: 'Imported: {{count}}',
+    stock: 'Stock',
   },
   offline: {
     pageTitle: 'No connection',
@@ -413,5 +445,9 @@ export const en: TranslationSchema = {
   },
   errors: {
     appCrash: 'SIMCHI failed to load',
+    somethingWrong: 'Something went wrong',
+    pageFailed: 'The page failed to load. You can retry or reset local data and go home.',
+    retry: 'Retry',
+    goHome: 'Go home',
   },
 }
